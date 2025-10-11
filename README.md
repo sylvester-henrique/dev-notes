@@ -5,7 +5,7 @@ Quick reference notes for programming concepts and technologies
 ## 📚 Table of Contents
 
 ### Programming Languages
-- [TypeScript](./typescript/index.md) - TypeScript fundamentals, types, and patterns
+- [TypeScript](./typescript/README.md) - TypeScript fundamentals, types, and patterns
 
 ### Frameworks & Platforms
 - TODO
