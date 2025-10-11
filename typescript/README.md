@@ -1,3 +1,19 @@
+# 📚 Table of Contents
+
+- [Javascript Fundamentals](#javascript-fundamentals)
+- [TypeScript Fundamentals](#typescript-fundamentals)
+  - [Type annotations (primitives, arrays, objects)](#type-annotations-primitives-arrays-objects)
+  - [Object Types](#object-types)
+  - [Type vs Interface: When to Use Which?](#type-vs-interface-when-to-use-which)
+  - [Utility types (Partial, Pick, Omit, Record, etc.)](#utility-types-partial-pick-omit-record-etc)
+  - [Generics (functions, classes, constraints)](#generics-functions-classes-constraints)
+  - [Enums and literal types](#enums-and-literal-types)
+  - [Type guards (typeof, instanceof, custom guards)](#type-guards-typeof-instanceof-custom-guards)
+  - [Async/await with proper typing](#asyncawait-with-proper-typing)
+  - [TypeScript Class Constructors](#typescript-class-constructors)
+- [Common Interview Problems](#common-interview-problems)
+- [Resources](#resources)
+
 # Javascript Fundamentals
 
 * **Set:**
