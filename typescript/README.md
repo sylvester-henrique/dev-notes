@@ -1,6 +1,4 @@
-# TypeScript Notes
-
-## Javascript Fundamentals
+# Javascript Fundamentals
 
 * **Set:**
    * A Set is a collection of unique values. It is similar to an array but enforces that each element within the set must be unique. If you attempt to add a duplicate value, it will not be added.
@@ -10,15 +8,15 @@
    * Use Map when you need to store key-value pairs where keys can be of any data type, and you require efficient lookups, additions, and deletions based on those keys.
 * **Array functions:** map, filter, find, reduce, sort, indexOf some, includes, every
 
-## TypeScript Fundamentals
+# TypeScript Fundamentals
 
-### Type annotations (primitives, arrays, objects)
+## Type annotations (primitives, arrays, objects)
 
-#### Primitives
+### Primitives
 
 TODO: Talk about symbol, unknown and never
 
-#### any vs unknown in TypeScript:
+### any vs unknown in TypeScript:
 
 * **any:** Disables type checking completely - unsafe ⚠️
 * **unknown:** Type-safe version of any - requires type checking before use ✅
@@ -75,7 +73,7 @@ function isString(val: unknown): val is string {
 * Catches bugs at compile time - not runtime
 * Better refactoring - type system has your back
 
-#### Arrays
+### Arrays
 
 TODO: talk about readonly array, tuple types, objects with methods, object destructuring with types.
 
@@ -83,23 +81,23 @@ TODO: talk about readonly array, tuple types, objects with methods, object destr
 * Union & Intersection types
 * Async/await with proper typing
 
-### Object Types
+## Object Types
 
 TODO: talk about intersection types, Class vs Interface: When to use which
 
-#### Interface
+### Interface
 
 * Defining object shapes for type checking
 * Defining API Response Types
 * Function Type Definitions
 
-#### Class
+### Class
 
 * When you need instances with methods
 * Encapsulation with Private State
 * Inheritance and Polymorphism
 
-### Type vs Interface: When to Use Which?
+## Type vs Interface: When to Use Which?
 
 ```typescript
 // ========== USE TYPE FOR: ==========
@@ -160,9 +158,9 @@ type ExtendedType = UserType & { age: number };
 interface ExtendedInterface extends UserInterface { age: number }
 ```
 
-### Utility types (Partial, Pick, Omit, Record, etc.)
+## Utility types (Partial, Pick, Omit, Record, etc.)
 
-#### Record
+### Record
 
 A way to define dictionaries with typed keys and values. Use cases:
 
@@ -208,7 +206,7 @@ const myPalette: ColorPalette = {
 };
 ```
 
-#### Partial
+### Partial
 
 ```typescript
 interface Todo {
@@ -224,7 +222,7 @@ let partialTodo: Partial<Todo> = {
 };
 ```
 
-#### Required
+### Required
 
 ```typescript
 // Required makes all properties required
@@ -239,7 +237,7 @@ let requiredTodo: Required<OptionalTodo> = {
 };
 ```
 
-#### Readonly
+### Readonly
 
 ```typescript
 // Readonly makes all properties readonly
@@ -252,7 +250,7 @@ let readonlyTodo: Readonly<Todo> = {
 // readonlyTodo.completed = true; // ❌ Error
 ```
 
-### Generics (functions, classes, constraints)
+## Generics (functions, classes, constraints)
 
 ```typescript
 function groupByTypeSafe<T, K extends keyof T>(
@@ -269,9 +267,9 @@ function groupByTypeSafe<T, K extends keyof T>(
 * Ensures K is a valid key of T
 * Provides compile-time safety and autocomplete
 
-### Enums and literal types
+## Enums and literal types
 
-#### Enums
+### Enums
 
 ```typescript
 enum Direction {
@@ -291,7 +289,7 @@ let currentDirection: Direction = Direction.Up;
 let operationStatus: Status = Status.Pending;
 ```
 
-#### Literal Types
+### Literal Types
 
 ```typescript
 type CardinalDirection = "North" | "South" | "East" | "West";
@@ -307,9 +305,9 @@ Use **Enums** when you need a runtime representation of your named constants, an
 
 Use **Literal Types** (with Unions) when you primarily need compile-time type safety for a fixed set of primitive values and want to avoid generating extra runtime code. They are particularly effective for defining specific string or number values that a variable or function parameter can accept.
 
-### Type guards (typeof, instanceof, custom guards)
+## Type guards (typeof, instanceof, custom guards)
 
-#### typeof
+### typeof
 
 Used to check the type of primitive types (string, number, boolean, symbol, bigint, undefined, function). Ex:
 
@@ -372,7 +370,7 @@ function executeIfFunction(value: string | (() => void)): void {
 }
 ```
 
-#### instanceof
+### instanceof
 
 Used for class instances and constructor functions. Checks the prototype chain.
 
@@ -445,7 +443,7 @@ try {
 }
 ```
 
-#### Custom Type Guards (User-Defined Type Predicates)
+### Custom Type Guards (User-Defined Type Predicates)
 
 Used to create your own type-checking functions using `is` keyword. Ex:
 
@@ -479,7 +477,7 @@ function greetUser(user: User | Admin): string {
 }
 ```
 
-#### The in Operator (Property Existence Check)
+### The in Operator (Property Existence Check)
 
 Check if property exists in an object. Ex:
 
@@ -524,15 +522,15 @@ function initializeConfig(config: Config): void {
 }
 ```
 
-### Async/await with proper typing
+## Async/await with proper typing
 
 TODO
 
-### TypeScript Class Constructors
+## TypeScript Class Constructors
 
 TODO: talk about Shorthand Syntax
 
-## Common Interview Problems
+# Common Interview Problems
 
 * Array manipulation with proper typing
 * Object transformations
@@ -541,6 +539,6 @@ TODO: talk about Shorthand Syntax
 * Error handling with typed errors
 * Working with external libraries (proper type imports)
 
-## Resources
+# Resources
 
 [TypeScript Playground](https://www.typescriptlang.org/play)
