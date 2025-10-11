@@ -1,32 +1,18 @@
 # 📚 Table of Contents
 
-- [Javascript Fundamentals](#javascript-fundamentals)
-- [TypeScript Fundamentals](#typescript-fundamentals)
-  - [Type annotations (primitives, arrays, objects)](#type-annotations-primitives-arrays-objects)
-  - [Object Types](#object-types)
-  - [Type vs Interface: When to Use Which?](#type-vs-interface-when-to-use-which)
-  - [Utility types (Partial, Pick, Omit, Record, etc.)](#utility-types-partial-pick-omit-record-etc)
-  - [Generics (functions, classes, constraints)](#generics-functions-classes-constraints)
-  - [Enums and literal types](#enums-and-literal-types)
-  - [Type guards (typeof, instanceof, custom guards)](#type-guards-typeof-instanceof-custom-guards)
-  - [Async/await with proper typing](#asyncawait-with-proper-typing)
-  - [TypeScript Class Constructors](#typescript-class-constructors)
+- [Type annotations (primitives, arrays, objects)](#type-annotations-primitives-arrays-objects)
+- [Object Types](#object-types)
+- [Type vs Interface: When to Use Which?](#type-vs-interface-when-to-use-which)
+- [Utility types (Partial, Pick, Omit, Record, etc.)](#utility-types-partial-pick-omit-record-etc)
+- [Generics (functions, classes, constraints)](#generics-functions-classes-constraints)
+- [Enums and literal types](#enums-and-literal-types)
+- [Type guards (typeof, instanceof, custom guards)](#type-guards-typeof-instanceof-custom-guards)
+- [Async/await with proper typing](#asyncawait-with-proper-typing)
+- [TypeScript Class Constructors](#typescript-class-constructors)
 - [Common Interview Problems](#common-interview-problems)
 - [Resources](#resources)
 
-# Javascript Fundamentals
-
-* **Set:**
-   * A Set is a collection of unique values. It is similar to an array but enforces that each element within the set must be unique. If you attempt to add a duplicate value, it will not be added.
-   * Use Set when you need to store a collection of unique values and quickly check for the presence of a value.
-* **Map:**
-   * A Map is a collection of key-value pairs, where the keys can be of any data type (unlike plain JavaScript objects, which typically restrict keys to strings or Symbols). Each key in a Map is unique, and it maps to a specific value
-   * Use Map when you need to store key-value pairs where keys can be of any data type, and you require efficient lookups, additions, and deletions based on those keys.
-* **Array functions:** map, filter, find, reduce, sort, indexOf some, includes, every
-
-# TypeScript Fundamentals
-
-## Type annotations (primitives, arrays, objects)
+# Type annotations (primitives, arrays, objects)
 
 ### Primitives
 
@@ -97,7 +83,7 @@ TODO: talk about readonly array, tuple types, objects with methods, object destr
 * Union & Intersection types
 * Async/await with proper typing
 
-## Object Types
+# Object Types
 
 TODO: talk about intersection types, Class vs Interface: When to use which
 
@@ -113,7 +99,7 @@ TODO: talk about intersection types, Class vs Interface: When to use which
 * Encapsulation with Private State
 * Inheritance and Polymorphism
 
-## Type vs Interface: When to Use Which?
+# Type vs Interface: When to Use Which?
 
 ```typescript
 // ========== USE TYPE FOR: ==========
@@ -174,7 +160,7 @@ type ExtendedType = UserType & { age: number };
 interface ExtendedInterface extends UserInterface { age: number }
 ```
 
-## Utility types (Partial, Pick, Omit, Record, etc.)
+# Utility types (Partial, Pick, Omit, Record, etc.)
 
 ### Record
 
@@ -266,7 +252,7 @@ let readonlyTodo: Readonly<Todo> = {
 // readonlyTodo.completed = true; // ❌ Error
 ```
 
-## Generics (functions, classes, constraints)
+# Generics (functions, classes, constraints)
 
 ```typescript
 function groupByTypeSafe<T, K extends keyof T>(
@@ -283,7 +269,7 @@ function groupByTypeSafe<T, K extends keyof T>(
 * Ensures K is a valid key of T
 * Provides compile-time safety and autocomplete
 
-## Enums and literal types
+# Enums and literal types
 
 ### Enums
 
@@ -321,7 +307,7 @@ Use **Enums** when you need a runtime representation of your named constants, an
 
 Use **Literal Types** (with Unions) when you primarily need compile-time type safety for a fixed set of primitive values and want to avoid generating extra runtime code. They are particularly effective for defining specific string or number values that a variable or function parameter can accept.
 
-## Type guards (typeof, instanceof, custom guards)
+# Type guards (typeof, instanceof, custom guards)
 
 ### typeof
 
@@ -538,11 +524,11 @@ function initializeConfig(config: Config): void {
 }
 ```
 
-## Async/await with proper typing
+# Async/await with proper typing
 
 TODO
 
-## TypeScript Class Constructors
+# TypeScript Class Constructors
 
 TODO: talk about Shorthand Syntax
 
