@@ -1,8 +1,8 @@
 # 📚 Table of Contents
 
-- [Javascript Fundamentals](#javascript-fundamentals)
+- [JavaScript Fundamentals](#javascript-fundamentals)
 
-# Javascript Fundamentals
+# JavaScript Fundamentals
 
 * **Set:**
    * A Set is a collection of unique values. It is similar to an array but enforces that each element within the set must be unique. If you attempt to add a duplicate value, it will not be added.
