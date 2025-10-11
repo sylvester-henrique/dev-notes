@@ -6,6 +6,7 @@ Quick reference notes for programming concepts and technologies
 
 ### Programming Languages
 - [TypeScript](./typescript/README.md) - TypeScript fundamentals, types, and patterns
+- [JavaScript](./javascript/README.md) - JavaScript fundamentals
 
 ### Frameworks & Platforms
 - TODO
