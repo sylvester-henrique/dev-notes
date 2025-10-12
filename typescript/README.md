@@ -1,8 +1,7 @@
 # 📚 Table of Contents
 
-- [Types](#type-annotations-primitives-arrays-objects)
-- [Object Types](#object-types)
-- [Type vs Interface: When to Use Which?](#type-vs-interface-when-to-use-which)
+- [Primitive Types](#types-primitives-and-special-types)
+- [Non-Primitive Types](#non-primitive-types)
 - [Utility types (Partial, Pick, Omit, Record, etc.)](#utility-types-partial-pick-omit-record-etc)
 - [Generics (functions, classes, constraints)](#generics-functions-classes-constraints)
 - [Enums and literal types](#enums-and-literal-types)
@@ -12,7 +11,7 @@
 - [Common Interview Problems](#common-interview-problems)
 - [Resources](#resources)
 
-# Types
+# Primitive Types
 
 ## Primitives
 
@@ -134,11 +133,147 @@ Differences from `void`
 - `void` means a function does not return a value (may return `undefined`).
 - `never` means a function **never returns at all** (it throws or loops forever).
 
-### Arrays
+# Non-Primitive Types
 
-TODO: talk about readonly array, tuple types, objects with methods, object destructuring with types.
+## 1. Object
 
-# Object Types
+- The most general non-primitive type.
+- Includes arrays, functions, custom objects, classes, etc.
+- Can be described with `{}` or the more specific `object` type.
+
+```typescript
+let obj: object = { a: 1, b: 2 };
+let arr: object = [1, 2, 3]; // Arrays are objects
+let fun: object = () => {};  // Functions are objects
+
+// Specific shape
+let user: { name: string; age: number } = { name: "Alice", age: 30 };
+```
+
+## 2. Array
+
+- Ordered list of elements.
+- Annotated as `Type[]` or `Array<Type>`.
+
+```typescript
+let numbers: number[] = [1, 2, 3];
+let users: Array<{ name: string; age: number }> = [{ name: "Bob", age: 25 }];
+```
+
+## 3. Function
+
+- Functions are objects with callable signatures.
+- You can annotate them with parameter and return types.
+
+```typescript
+let add: (x: number, y: number) => number = (a, b) => a + b;
+type Logger = (msg: string) => void;
+```
+
+## 4. Class
+
+- Blueprint for creating objects with properties and methods.
+- Classes define both type and value (runtime).
+
+```typescript
+class Animal {
+  constructor(public name: string) {}
+  speak(): string {
+    return `${this.name} makes a sound`;
+  }
+}
+let pet: Animal = new Animal("Dog");
+```
+
+## 5. Tuple
+
+- Fixed-length, ordered array of types.
+- Useful for representing sets of related values.
+
+```typescript
+let point: [number, number] = [10, 20];
+let result: [boolean, string] = [true, "OK"];
+```
+
+## 6. Enum
+
+- Named set of numeric or string constants.
+- Useful for fixed sets of options.
+
+```typescript
+enum Direction { North, South, East, West }
+let dir: Direction = Direction.North;
+```
+
+## Special Types
+
+## 7. Interface
+
+- Describes the shape of an object.
+- Used for contracts and type checking, not for runtime values.
+
+```typescript
+interface User {
+  id: number;
+  username: string;
+  email: string;
+}
+let user: User = { id: 1, username: "alice", email: "alice@example.com" };
+```
+
+## 8. Type Alias
+
+- Alternative name for a type (primitive, object, union, intersection, etc.).
+
+```typescript
+type Point = { x: number; y: number };
+type Status = "loading" | "success" | "error";
+```
+
+## 9. Union & Intersection Types
+
+- **Union**: A value can be one of several types.
+- **Intersection**: A value must satisfy all types.
+
+```typescript
+type Id = string | number; // union
+type Employee = Person & { employeeId: number }; // intersection
+```
+
+## Other Non-Primitive Types
+
+- **Date**: Built-in object for dates/times.
+- **RegExp**: Built-in object for regular expressions.
+- **Map/Set**: Key-value and unique collection objects.
+
+```typescript
+let date: Date = new Date();
+let regex: RegExp = /abc/;
+let map: Map<string, number> = new Map();
+let set: Set<number> = new Set([1, 2, 3]);
+```
+
+## Key Difference
+
+- **Primitive types** are immutable and compared by value.
+- **Non-primitive types** are reference types, compared by reference (object identity).
+
+## Summary Table
+
+| Type         | Description                    | Example                      |
+|--------------|--------------------------------|------------------------------|
+| object       | General object                 | `{}`                         |
+| array        | Ordered collection             | `[1, 2, 3]`                  |
+| function     | Callable                       | `(x) => x * 2`               |
+| class        | Blueprint for objects          | `class Animal {}`            |
+| tuple        | Fixed-length array             | `[number, string]`           |
+| enum         | Named constants                | `enum Dir {N, S, E, W}`      |
+| interface    | Object contract                | `interface User {...}`       |
+| type alias   | Type shortcut                  | `type Id = string | number`  |
+| union        | One of several types           | `string | number`            |
+| intersection | All combined types             | `Person & Employee`          |
+
+## Interface vs Class: When to Use Which?
 
 ## Interface
 
@@ -152,11 +287,7 @@ TODO: talk about readonly array, tuple types, objects with methods, object destr
 * Encapsulation with Private State
 * Inheritance and Polymorphism
 
-# Interfaces 
-
-TODO: Union & Intersection types
-
-# Type vs Interface: When to Use Which?
+## Type vs Interface: When to Use Which?
 
 ```typescript
 // ========== USE TYPE FOR: ==========
@@ -587,10 +718,6 @@ function initializeConfig(config: Config): void {
   }
 }
 ```
-
-# Async/await with proper typing
-
-TODO
 
 # TypeScript Class Constructors
 
