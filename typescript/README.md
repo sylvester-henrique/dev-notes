@@ -3,7 +3,7 @@
 - [Primitive Types](#types-primitives-and-special-types)
 - [Non-Primitive Types](#non-primitive-types)
 - [Utility types (Partial, Pick, Omit, Record, etc.)](#utility-types-partial-pick-omit-record-etc)
-- [Generics (functions, classes, constraints)](#generics-functions-classes-constraints)
+- [Generics](#generics)
 - [Enums and literal types](#enums-and-literal-types)
 - [Type guards (typeof, instanceof, custom guards)](#type-guards-typeof-instanceof-custom-guards)
 - [Async/await with proper typing](#asyncawait-with-proper-typing)
@@ -443,24 +443,105 @@ let readonlyTodo: Readonly<Todo> = {
 // readonlyTodo.completed = true; // ❌ Error
 ```
 
-# Generics (functions, classes, constraints)
+# Generics
 
-TODO: better explain generics
+Generics allow you to write flexible, reusable, and type-safe code by making types parameters instead of hardcoded values.
+
+## What Are Generics?
+
+- Generics are like variables for types.
+- They enable you to create components (functions, classes, interfaces, etc.) that work with any data type while still enforcing type safety.
+
+## Basic Generic Example
 
 ```typescript
+function identity<T>(value: T): T {
+  return value;
+}
+
+const num = identity<number>(42);       // T is number
+const str = identity<string>("hello");  // T is string
+```
+
+## Generic Types
+
+You can define generic types for objects, arrays, and more.
+
+```typescript
+type Box<T> = {
+  value: T;
+};
+
+const numberBox: Box<number> = { value: 123 };
+const stringBox: Box<string> = { value: "abc" };
+```
+
+## Generic Interfaces
+
+```typescript
+interface Result<T> {
+  success: boolean;
+  data: T;
+}
+
+const userResult: Result<{ name: string }> = {
+  success: true,
+  data: { name: "Alice" }
+};
+```
+
+## Generic Classes
+
+```typescript
+class Pair<A, B> {
+  constructor(public first: A, public second: B) {}
+}
+
+const pair = new Pair<string, number>("age", 30);
+```
+
+## Generic Constraints
+
+You can restrict what types can be used with a generic using `extends`.
+
+```typescript
+function getLength<T extends { length: number }>(item: T): number {
+  return item.length;
+}
+
+getLength("hello");       // OK
+getLength([1, 2, 3]);     // OK
+// getLength(123);        // Error: number doesn't have length property
+```
+
+You can use multiple generics with constraints
+
+```typescript
+// keyof ensures K is a valid key of T
 function groupByTypeSafe<T, K extends keyof T>(
   array: T[],
   key: K
 )
 ```
 
-**Generics**
-* T: The type of objects in the array
-* K: A key that must exist in type T
+## Default Generic Types
 
-**keyof**
-* Ensures K is a valid key of T
-* Provides compile-time safety and autocomplete
+You can provide default types for generics:
+
+```typescript
+function wrap<T = string>(value: T): T[] {
+  return [value];
+}
+
+wrap();          // T is string by default, returns string[]
+wrap(10);        // T is number, returns number[]
+```
+
+## Why Use Generics?
+
+- Write DRY code: Avoid repeating similar type definitions.
+- Reusable: Functions and classes can work with any type.
+- Type-safe: Errors are caught at compile time.
 
 # Enums and literal types
 
