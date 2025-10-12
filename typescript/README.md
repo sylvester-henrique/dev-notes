@@ -1,6 +1,6 @@
 # 📚 Table of Contents
 
-- [Type annotations (primitives, arrays, objects)](#type-annotations-primitives-arrays-objects)
+- [Types](#type-annotations-primitives-arrays-objects)
 - [Object Types](#object-types)
 - [Type vs Interface: When to Use Which?](#type-vs-interface-when-to-use-which)
 - [Utility types (Partial, Pick, Omit, Record, etc.)](#utility-types-partial-pick-omit-record-etc)
@@ -12,11 +12,21 @@
 - [Common Interview Problems](#common-interview-problems)
 - [Resources](#resources)
 
-# Type annotations (primitives, arrays, objects)
+# Types
 
-### Primitives
+## Primitives
 
-TODO: Talk about symbol, unknown and never
+| Type      | Description                                   | Example                         |
+|-----------|-----------------------------------------------|---------------------------------|
+| string    | Textual data                                  | `"hello"`, `'world'`            |
+| number    | Numeric values (int, float, hex, etc.)        | `42`, `3.14`, `0xFF`            |
+| boolean   | True/false values                             | `true`, `false`                 |
+| symbol    | Unique, immutable identifier (ES6+)           | `Symbol("desc")`                |
+| bigint    | Arbitrarily large integers (ES2020+)          | `9007199254740991n`             |
+| undefined | Declared but not assigned a value             | `undefined`                     |
+| null      | Intentional absence of any object value       | `null`                          |
+
+## Special types
 
 ### any vs unknown in TypeScript:
 
@@ -72,6 +82,57 @@ Benefits of unknown:
 * Explicit narrowing - you must prove the type
 * Catches bugs at compile time - not runtime
 * Better refactoring - type system has your back
+
+### never
+
+- `never` represents **values that never occur**.
+- Used for functions that **always throw**, **never return**, or unreachable code.
+
+#### Common Use Cases
+
+#### 1. Functions that always throw
+
+```typescript
+function throwError(message: string): never {
+  throw new Error(message);
+}
+```
+
+#### 2. Infinite loops
+
+```typescript
+function forever(): never {
+  while (true) {}
+}
+```
+
+#### 3. Exhaustiveness checks in discriminated unions
+
+The `never` type is useful for ensuring all cases of a union are handled. If a new case is added and not handled, TypeScript will give a compile-time error at the `never` assignment.
+
+```typescript
+type Status = "loading" | "success" | "error";
+
+function handleStatus(status: Status): string {
+  switch (status) {
+    case "loading":
+      return "Loading...";
+    case "success":
+      return "Success!";
+    case "error":
+      return "Error!";
+    default:
+      // This block should be unreachable if all cases are handled
+      const _unreachable: never = status;
+      return _unreachable;
+  }
+}
+```
+
+Differences from `void`
+
+- `void` means a function does not return a value (may return `undefined`).
+- `never` means a function **never returns at all** (it throws or loops forever).
 
 ### Arrays
 
