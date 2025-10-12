@@ -7,7 +7,7 @@
 - [Enums and literal types](#enums-and-literal-types)
 - [Type guards (typeof, instanceof, custom guards)](#type-guards-typeof-instanceof-custom-guards)
 - [Async/await with proper typing](#asyncawait-with-proper-typing)
-- [TypeScript Class Constructors](#typescript-class-constructors)
+- [TypeScript Classes: Features Beyond JavaScript](#typescript-classes-features-beyond-javascript)
 - [Common Interview Problems](#common-interview-problems)
 - [Resources](#resources)
 
@@ -727,9 +727,76 @@ function initializeConfig(config: Config): void {
 }
 ```
 
-# TypeScript Class Constructors
+# TypeScript Classes: Features Beyond JavaScript
 
-TODO: talk about Shorthand Syntax
+TypeScript enhances class constructors with features not present in JavaScript:
+
+### 1. Type Annotations
+
+TypeScript allows you to annotate constructor parameters and class properties with types.
+
+```typescript
+class User {
+  name: string;
+  age: number;
+
+  constructor(name: string, age: number) {
+    this.name = name;
+    this.age = age;
+  }
+}
+```
+
+### 2. Parameter Properties (Access Modifiers in Constructor)
+
+TypeScript supports access modifiers (`public`, `private`, `protected`, `readonly`) directly in constructor parameters, automatically declaring and initializing the class properties.
+
+```typescript
+class User {
+  constructor(
+    public name: string,
+    private age: number,
+    readonly isAdmin: boolean
+  ) {
+    // Properties are automatically created and initialized
+  }
+}
+```
+
+### 3. Compile-Time Type Checking
+
+TypeScript checks types and property access at compile-time.
+
+```typescript
+const u = new User("Alice", "not-a-number", true); // Error: age must be a number
+console.log(u.age); // Error: age is private
+```
+
+### 4. Optional and Default Parameters
+
+TypeScript supports optional parameters and default values with type checking.
+
+```typescript
+class User {
+  constructor(public name: string, public age: number = 18, public email?: string) {}
+}
+```
+
+### 5. Generics in Classes and Constructors
+
+TypeScript enables generic classes for type-safe patterns.
+
+```typescript
+class Box<T> {
+  constructor(public value: T) {}
+}
+
+const box = new Box<number>(42); // value is number
+```
+
+### 6. No Runtime Impact
+
+All TypeScript class features are erased at compile time. The resulting JavaScript is standard class syntax, with no types or access modifiers.
 
 # Common Interview Problems
 
