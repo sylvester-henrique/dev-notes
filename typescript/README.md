@@ -500,7 +500,15 @@ let legalAge: Age = 18;
 
 - Use **Literal Types** (with Unions) when you primarily need compile-time type safety for a fixed set of primitive values and want to avoid generating extra runtime code. They are particularly effective for defining specific string or number values that a variable or function parameter can accept.
 
-TODO: better explain when to use which with examples
+| Feature                  | Literal Types                  | Enums                         |
+|--------------------------|--------------------------------|-------------------------------|
+| Compile-time only        | ✅ Yes                         | ❌ No (runtime object)        |
+| Runtime mapping/lookup   | ❌ No                          | ✅ Yes                        |
+| Iteration over values    | ❌ Manual                     | ✅ Built-in                   |
+| Discriminated unions     | ✅ Yes                        | ❌ Not idiomatic              |
+| Lightweight API status   | ✅ Yes                        | ❌ Overkill                   |
+| Named constants          | ❌ No                         | ✅ Yes                        |
+| Reverse lookup           | ❌ No                         | ✅ Numeric enums only         |
 
 # Type guards (typeof, instanceof, custom guards)
 
