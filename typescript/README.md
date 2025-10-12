@@ -2,7 +2,7 @@
 
 - [Primitive Types](#types-primitives-and-special-types)
 - [Non-Primitive Types](#non-primitive-types)
-- [Utility types (Partial, Pick, Omit, Record, etc.)](#utility-types-partial-pick-omit-record-etc)
+- [Utility types (Record, Partial, Required, Readonly)](#utility-types-record-partial-required-readonly)
 - [Generics](#generics)
 - [Enums and literal types](#enums-and-literal-types)
 - [Type guards (typeof, instanceof, custom guards)](#type-guards-typeof-instanceof-custom-guards)
@@ -348,7 +348,7 @@ type ExtendedType = UserType & { age: number };
 interface ExtendedInterface extends UserInterface { age: number }
 ```
 
-# Utility types (Partial, Pick, Omit, Record, etc.)
+# Utility types (Record, Partial, Required, Readonly)
 
 ## Record
 
