@@ -6,9 +6,8 @@
 - [Generics](#generics)
 - [Enums and literal types](#enums-and-literal-types)
 - [Type guards (typeof, instanceof, custom guards)](#type-guards-typeof-instanceof-custom-guards)
-- [Async/await with proper typing](#asyncawait-with-proper-typing)
 - [TypeScript Classes: Features Beyond JavaScript](#typescript-classes-features-beyond-javascript)
-- [Common Interview Problems](#common-interview-problems)
+- [Error Handling with Typed Errors in TypeScript](#error-handling-with-typed-errors-in-typescript)
 - [Resources](#resources)
 
 # Primitive Types
@@ -879,13 +878,87 @@ const box = new Box<number>(42); // value is number
 
 All TypeScript class features are erased at compile time. The resulting JavaScript is standard class syntax, with no types or access modifiers.
 
-# Common Interview Problems
+# Error Handling with Typed Errors in TypeScript
 
-- Array manipulation with proper typing
-- Object transformations
-- API response typing and parsing
-- Generic utility function creation
-- Error handling with typed errors
+TypeScript enables **type-safe error handling** by letting you define and handle custom error types, making your code more robust and maintainable.
+
+## Why Typed Errors?
+
+- JavaScript's `throw` and `catch` can handle anything (strings, objects, etc.), but this is **not type-safe**.
+- TypeScript encourages defining error classes or types so you can **precisely handle different error cases**.''
+
+## Defining Custom Error Types
+
+Use classes (recommended) to create custom error types:
+
+```typescript
+class NotFoundError extends Error {
+  constructor(resource: string) {
+    super(`${resource} not found`);
+    this.name = "NotFoundError";
+  }
+}
+
+class ValidationError extends Error {
+  constructor(public details: string) {
+    super(`Validation failed: ${details}`);
+    this.name = "ValidationError";
+  }
+}
+```
+
+## Throwing Typed Errors
+
+```typescript
+function getUser(id: number) {
+  if (id === 0) {
+    throw new NotFoundError("User");
+  }
+  if (id < 0) {
+    throw new ValidationError("ID must be positive");
+  }
+  // ...fetch user
+}
+```
+
+## Handling Typed Errors
+
+Use `instanceof` to check error types in your `catch` block:
+
+```typescript
+try {
+  getUser(0);
+} catch (error) {
+  if (error instanceof NotFoundError) {
+    console.error("Resource missing:", error.message);
+  } else if (error instanceof ValidationError) {
+    console.error("Invalid input:", error.details);
+  } else {
+    console.error("Unexpected error:", error);
+  }
+}
+```
+
+## Typed Errors with Union Types
+
+For functional programming, you can use union types for error results:
+
+```typescript
+type Result<T> = { type: "success"; data: T } | { type: "error"; error: NotFoundError | ValidationError };
+
+function fetchUser(id: number): Result<string> {
+  if (id === 0) {
+    return { type: "error", error: new NotFoundError("User") };
+  }
+  return { type: "success", data: "Alice" };
+}
+```
+
+## Benefits
+
+- **Type safety:** Only handle expected error types.
+- **Cleaner code:** No catching random strings or objects.
+- **Better tooling:** IDEs can suggest error properties and narrow types.
 
 # Resources
 
