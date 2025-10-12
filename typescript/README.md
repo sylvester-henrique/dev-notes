@@ -23,8 +23,6 @@ TODO: Talk about symbol, unknown and never
 * **any:** Disables type checking completely - unsafe ⚠️
 * **unknown:** Type-safe version of any - requires type checking before use ✅
 
-**Unknown example:**
-
 ```typescript
 let value: unknown = "hello";
 
@@ -60,14 +58,14 @@ function isString(val: unknown): val is string {
 }
 ```
 
-**Problems with any:**
+Problems with any:
 * No type safety - defeats the purpose of TypeScript
 * No autocomplete - IntelliSense doesn't work
 * Runtime errors - bugs slip through to production
 * Type pollution - spreads to other variables
 * Refactoring nightmare - can't trust your types
 
-**Benefits of unknown:**
+Benefits of unknown:
 
 * Type safe - forces you to check types
 * No type pollution - doesn't spread
@@ -79,25 +77,23 @@ function isString(val: unknown): val is string {
 
 TODO: talk about readonly array, tuple types, objects with methods, object destructuring with types.
 
-* Interfaces vs Types
-* Union & Intersection types
-* Async/await with proper typing
-
 # Object Types
 
-TODO: talk about intersection types, Class vs Interface: When to use which
-
-### Interface
+## Interface
 
 * Defining object shapes for type checking
 * Defining API Response Types
 * Function Type Definitions
 
-### Class
+## Class
 
 * When you need instances with methods
 * Encapsulation with Private State
 * Inheritance and Polymorphism
+
+# Interfaces 
+
+TODO: Union & Intersection types
 
 # Type vs Interface: When to Use Which?
 
@@ -162,11 +158,11 @@ interface ExtendedInterface extends UserInterface { age: number }
 
 # Utility types (Partial, Pick, Omit, Record, etc.)
 
-### Record
+## Record
 
 A way to define dictionaries with typed keys and values. Use cases:
 
-**Defining Objects with Predefined Keys and Consistent Value Types**
+### Defining Objects with Predefined Keys and Consistent Value Types
 
 ```typescript
 type UserRoles = 'admin' | 'editor' | 'viewer';
@@ -179,7 +175,7 @@ const permissions: UserPermissions = {
 };
 ```
 
-**Creating Type-Safe Dictionaries or Maps.**
+### Creating Type-Safe Dictionaries or Maps
 
 ```typescript
 type ErrorCodes = Record<string, string>;
@@ -190,7 +186,7 @@ const errors: ErrorCodes = {
 };
 ```
 
-**Enforcing exhaustive case handling.**
+### Enforcing exhaustive case handling
 
 ```typescript
 enum ThemeColor {
@@ -206,9 +202,12 @@ const myPalette: ColorPalette = {
     [ThemeColor.Secondary]: '#6c757d',
     [ThemeColor.Accent]: '#ffc107',
 };
+
+// setting '#6c757d' to color
+const color = myPalette.secondary;
 ```
 
-### Partial
+## Partial
 
 ```typescript
 interface Todo {
@@ -224,7 +223,7 @@ let partialTodo: Partial<Todo> = {
 };
 ```
 
-### Required
+## Required
 
 ```typescript
 // Required makes all properties required
@@ -239,7 +238,7 @@ let requiredTodo: Required<OptionalTodo> = {
 };
 ```
 
-### Readonly
+## Readonly
 
 ```typescript
 // Readonly makes all properties readonly
@@ -253,6 +252,8 @@ let readonlyTodo: Readonly<Todo> = {
 ```
 
 # Generics (functions, classes, constraints)
+
+TODO: better explain generics
 
 ```typescript
 function groupByTypeSafe<T, K extends keyof T>(
@@ -271,7 +272,7 @@ function groupByTypeSafe<T, K extends keyof T>(
 
 # Enums and literal types
 
-### Enums
+## Enums
 
 ```typescript
 enum Direction {
@@ -291,7 +292,7 @@ let currentDirection: Direction = Direction.Up;
 let operationStatus: Status = Status.Pending;
 ```
 
-### Literal Types
+## Literal Types
 
 ```typescript
 type CardinalDirection = "North" | "South" | "East" | "West";
@@ -303,13 +304,15 @@ let requestMethod: HttpMethod = "POST";
 let legalAge: Age = 18;
 ```
 
-Use **Enums** when you need a runtime representation of your named constants, and when you might need to iterate over the enum values or perform reverse lookups (e.g., getting the name from a numeric value).
+- Use **Enums** when you need a runtime representation of your named constants, and when you might need to iterate over the enum values or perform reverse lookups (e.g., getting the name from a numeric value).
 
-Use **Literal Types** (with Unions) when you primarily need compile-time type safety for a fixed set of primitive values and want to avoid generating extra runtime code. They are particularly effective for defining specific string or number values that a variable or function parameter can accept.
+- Use **Literal Types** (with Unions) when you primarily need compile-time type safety for a fixed set of primitive values and want to avoid generating extra runtime code. They are particularly effective for defining specific string or number values that a variable or function parameter can accept.
+
+TODO: better explain when to use which with examples
 
 # Type guards (typeof, instanceof, custom guards)
 
-### typeof
+## typeof
 
 Used to check the type of primitive types (string, number, boolean, symbol, bigint, undefined, function). Ex:
 
@@ -372,14 +375,14 @@ function executeIfFunction(value: string | (() => void)): void {
 }
 ```
 
-### instanceof
+## instanceof
 
 Used for class instances and constructor functions. Checks the prototype chain.
 
-**Limitations:**
+Limitations:
 
-* Doesn't work with interfaces (they don't exist at runtime)
-* Doesn't work with primitive values
+- Doesn't work with interfaces (they don't exist at runtime)
+- Doesn't work with primitive values
 
 **Examples:**
 
@@ -445,7 +448,7 @@ try {
 }
 ```
 
-### Custom Type Guards (User-Defined Type Predicates)
+## Custom Type Guards (User-Defined Type Predicates)
 
 Used to create your own type-checking functions using `is` keyword. Ex:
 
@@ -479,7 +482,7 @@ function greetUser(user: User | Admin): string {
 }
 ```
 
-### The in Operator (Property Existence Check)
+## The in Operator (Property Existence Check)
 
 Check if property exists in an object. Ex:
 
@@ -534,13 +537,12 @@ TODO: talk about Shorthand Syntax
 
 # Common Interview Problems
 
-* Array manipulation with proper typing
-* Object transformations
-* API response typing and parsing
-* Generic utility function creation
-* Error handling with typed errors
-* Working with external libraries (proper type imports)
+- Array manipulation with proper typing
+- Object transformations
+- API response typing and parsing
+- Generic utility function creation
+- Error handling with typed errors
 
 # Resources
 
-[TypeScript Playground](https://www.typescriptlang.org/play)
+- [TypeScript Playground](https://www.typescriptlang.org/play)
