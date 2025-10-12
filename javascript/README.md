@@ -11,3 +11,7 @@
    * A Map is a collection of key-value pairs, where the keys can be of any data type (unlike plain JavaScript objects, which typically restrict keys to strings or Symbols). Each key in a Map is unique, and it maps to a specific value
    * Use Map when you need to store key-value pairs where keys can be of any data type, and you require efficient lookups, additions, and deletions based on those keys.
 * **Array functions:** map, filter, find, reduce, sort, indexOf some, includes, every
+
+TODO: talk about type mapping
+
+TODO: talk about api request and responses and timeout strategy with AbortController
