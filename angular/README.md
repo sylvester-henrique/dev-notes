@@ -1,6 +1,7 @@
 # 📚 Table of Contents
 
 - [Components](#components)
+- [Components lifecycle Hooks](#components-lifecycle-hooks)
 - [Dependency Injection](#dependency-injection)
 - [Routes](#routes)
 - [Signals](#signals)
@@ -9,11 +10,28 @@
 
 Components are the building blocks of an Angular application. They control a portion of the view. It's important to organize your application into components to avoid code repetition and make the application easy to maintain and evolve over time.
 
-Every component must have:
+## Key aspects of Angular components
 
 - A TypeScript class with behaviors such as handling user input and fetching data from a server
 - An HTML template that controls what renders into the DOM
 - A CSS selector that defines how the component is used in HTML
+- It is possible to create components with Angular CLI
+- The selector property in the `@Component` decorator defines the HTML tag used to insert the component into templates.
+- Use the `@Input` decorator to pass data from a parent component to a child component.
+- Use the `@Output` decorator along with EventEmitter to send data from a child component to a parent component.
+
+Example:
+
+```typescript
+import { Component } from '@angular/core';
+
+@Component({
+  selector: 'app-my-component',
+  templateUrl: './my-component.component.html',
+  styleUrls: ['./my-component.component.css']
+})
+export class MyComponent { }
+```
 
 ## Best Practices for Creating Components
 
@@ -55,6 +73,15 @@ When designing components in an Angular application, following best practices en
 
 - Too many nested levels can make the app complex.
 - Flatten the hierarchy where possible.
+
+# Components lifecycle Hooks
+
+Angular components have lifecycle hooks-special methods you can implement to react to different phases in a component’s existence. Common hooks include:
+
+- **ngOnInit**: Called once after the component is initialized. Used for setup logic.
+- **ngOnChanges**: Called when input properties change.
+- **ngOnDestroy**: Called just before Angular destroys the component. Used for cleanup.
+- **Others**: ngAfterViewInit, ngAfterContentInit, etc.
 
 # Dependency Injection
 
