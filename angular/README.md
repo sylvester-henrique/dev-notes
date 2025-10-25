@@ -33,6 +33,40 @@ import { Component } from '@angular/core';
 export class MyComponent { }
 ```
 
+## Signals 
+
+Signals allow you to manage state and react to changes in a more efficient way. It's possible to update and observe data state changes. Using signal allows Angular to optimize render updates.
+
+```typescript
+// writable signal
+const count = signal(0);
+console.log('The count is: ' + count());
+count.set(3);
+count.update(value => value + 1);
+
+// computed signal (read-only) are both lazily evaluated and memoized
+const count: WritableSignal<number> = signal(0);
+const doubleCount: Signal<number> = computed(() => count() * 2);
+```
+
+### Effects
+
+An effect is an operation that runs whenever one or more signal values change.
+
+```typescript
+effect(() => {
+  console.log(`The current count is: ${count()}`);
+});
+```
+
+Avoid using effects for propagation of state changes. Instead, use computed signals to derive state.
+
+Effects are rarely needed in most application code, but may be useful in specific circumstances. Here are some examples of situations where an effect might be a good solution:
+
+- Logging data being displayed and when it changes, either for analytics or as a debugging tool.
+- Keeping data in sync with `window.localStorage`.
+- Adding custom DOM behavior that can't be expressed with template syntax.
+
 ## Best Practices for Creating Components
 
 When designing components in an Angular application, following best practices ensures your app is maintainable, scalable, and easy to understand.
