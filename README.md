@@ -8,8 +8,8 @@ Quick reference notes for programming concepts and technologies
 - [JavaScript](./javascript/README.md) - JavaScript fundamentals
 - [TypeScript](./typescript/README.md) - TypeScript fundamentals, types, and patterns
 
-### Frameworks & Platforms
-- TODO
+### Frameworks, Platforms and Libraries
+- [Angular](./angular/README.md)
 
 ### Programming Concepts
 - TODO
