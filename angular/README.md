@@ -465,3 +465,172 @@ onSubmit() {
 
 - **Use Template-Driven Forms:** For simple, straightforward forms where you want to keep logic in the template.
 - **Use Reactive Forms:** For complex forms, dynamic validation, conditional fields, or when you need full programmatic control and easier testing.
+
+# Observables in Angular
+
+An **Observable** is a core concept from the RxJS library (which Angular uses extensively) representing a stream of data that arrives over time. Observables can emit multiple values asynchronously, such as user events, HTTP responses, or timer intervals.
+
+## Key Features
+
+- **Asynchronous:** Handle data that arrives over time, not just instantly.
+- **Multiple values:** Can emit many values, not just one (unlike Promises).
+- **Operators:** RxJS provides powerful operators (`map`, `filter`, `merge`, `debounce`, etc.) to transform and combine streams.
+- **Subscription:** You “subscribe” to an Observable to start receiving its values.
+- **Unsubscription:** You can “unsubscribe” to stop receiving values (important for preventing memory leaks).
+
+## Common Use Cases in Angular
+
+- **HTTP requests:** Angular’s `HttpClient` returns Observables for API calls.
+- **Form and UI events:** Observables can handle user input, button clicks, etc.
+- **Reactive programming:** Observables enable composing complex async logic with RxJS operators.
+
+## Basic Example
+
+```typescript
+import { Observable } from 'rxjs';
+
+const obs$ = new Observable(observer => {
+  observer.next('First value');
+  setTimeout(() => observer.next('Second value'), 1000);
+  setTimeout(() => observer.complete(), 2000);
+});
+
+// Subscribe to start receiving values
+obs$.subscribe({
+  next: value => console.log(value),
+  complete: () => console.log('Stream complete')
+});
+// Output: "First value", after 1s: "Second value", after 2s: "Stream complete"
+```
+
+## HTTP Example in Angular
+
+```typescript
+import { HttpClient } from '@angular/common/http';
+
+export class MyComponent {
+  constructor(private http: HttpClient) {}
+
+  ngOnInit() {
+    this.http.get('https://api.example.com/data')
+      .subscribe(data => {
+        console.log('API Data:', data);
+      });
+  }
+}
+```
+- The `get` method returns an Observable emitting the HTTP response.
+
+## Using RxJS Operators
+
+```typescript
+import { map } from 'rxjs/operators';
+
+this.http.get('https://api.example.com/items')
+  .pipe(
+    map((items: any[]) => items.filter(item => item.active)),
+    map(activeItems => activeItems.length)
+  )
+  .subscribe(count => console.log('Active item count:', count));
+```
+
+## Unsubscribing
+
+When you subscribe to an Observable (especially for streams like intervals or user events), you should unsubscribe when the component is destroyed:
+
+```typescript
+import { Subscription } from 'rxjs';
+
+export class ExampleComponent implements OnInit, OnDestroy {
+  private sub!: Subscription;
+
+  ngOnInit() {
+    this.sub = this.http.get('...').subscribe(...);
+  }
+
+  ngOnDestroy() {
+    this.sub.unsubscribe();
+  }
+}
+```
+
+## Observables: Multiple Values in Angular
+
+Unlike Promises, which resolve only once, **Observables** in Angular (powered by RxJS) can emit multiple values over time. This makes them ideal for representing streams—such as user events, timer intervals, or data that updates continuously.
+
+## Example 1: Interval Observable
+
+This observable emits a new value every second:
+
+```typescript
+import { interval } from 'rxjs';
+
+const seconds$ = interval(1000); // emits 0, 1, 2, 3, ...
+
+// Subscribe to receive multiple values over time
+seconds$.subscribe(value => console.log('Seconds elapsed:', value));
+```
+
+**Output Example:**  
+```
+Seconds elapsed: 0
+Seconds elapsed: 1
+Seconds elapsed: 2
+...
+```
+
+## Example 2: Observable from User Events
+
+This observable emits a value every time the user clicks:
+
+```typescript
+import { fromEvent } from 'rxjs';
+
+const clicks$ = fromEvent(document, 'click');
+
+// Each click triggers a new value
+clicks$.subscribe(event => console.log('Mouse clicked!', event));
+```
+**Output Example:**  
+Each mouse click logs `'Mouse clicked!'` and the event object.
+
+## Example 3: Custom Observable (Emitting Multiple Values)
+
+You can create an observable that emits several values, then completes:
+
+```typescript
+import { Observable } from 'rxjs';
+
+const multiValue$ = new Observable(observer => {
+  observer.next('First');
+  observer.next('Second');
+  observer.next('Third');
+  observer.complete();
+});
+
+multiValue$.subscribe({
+  next: value => console.log('Received:', value),
+  complete: () => console.log('All done!')
+});
+```
+**Output:**
+```
+Received: First
+Received: Second
+Received: Third
+All done!
+```
+
+## Observables vs Promises
+
+| Feature               | Observables                                    | Promises                         |
+|-----------------------|------------------------------------------------|-----------------------------------|
+| **Multiple Values**   | Can emit multiple values over time              | Emits only a single value         |
+| **Lazy Evaluation**   | Execution starts on subscription                | Execution starts immediately      |
+| **Cancellation**      | Can be canceled via `unsubscribe()`             | Cannot be canceled once started   |
+| **Operators**         | Rich set of RxJS operators (`map`, `filter`, etc.) | No built-in operators             |
+| **Error Handling**    | Can emit multiple errors                        | Resolves or rejects once          |
+| **Completion**        | Can complete multiple times, or never           | Resolves/rejects only once        |
+| **Use Case**          | Streams, events, async data over time           | Single async operation            |
+
+---
