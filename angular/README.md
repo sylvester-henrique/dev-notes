@@ -222,7 +222,95 @@ Purpose of Modules
 - **Dependency Management**: Declare dependencies (services, other modules).
 - **Lazy Loading**: Load parts of your app on demand for better performance.
 
-TODO: talk about when to use module vs standalone components. How would you split a large Angular application into multiple modules?
+## Angular Modules vs. Standalone Components
+
+This guide explains when to use Angular modules versus standalone components, and how to split a large Angular application into multiple modules.
+
+## Angular Modules
+
+**NgModules** are traditional Angular building blocks that group related components, directives, pipes, and services. Modules help organize code, enable lazy loading, and manage dependencies.
+
+### Use Modules When:
+- You want to group related features (e.g., `DashboardModule`, `UserModule`).
+- You need lazy loading for performance (feature modules loaded on demand).
+- You want to share code (e.g., `SharedModule`, `CoreModule`).
+- You’re integrating with libraries or code bases that expect modules.
+
+**Benefits:**
+- Clear organization and separation.
+- Supports lazy loading for large apps.
+- Encapsulates dependencies and configuration.
+
+## Standalone Components
+
+**Standalone components** (introduced in Angular v14+) can be used without being declared in a module. They import their own dependencies and can be rendered directly.
+
+### Use Standalone Components When:
+- You want simpler, more lightweight components.
+- Building small apps, prototypes, or isolated features.
+- Migrating incrementally from module-based architecture.
+- You want to reduce boilerplate and module configuration.
+
+**Benefits:**
+- Less setup and boilerplate.
+- Easier to reuse and share.
+- Simplifies component tree and routing.
+
+## Splitting a Large Angular Application Into Multiple Modules
+
+For large applications, splitting into multiple modules helps maintainability, scalability, and performance.
+
+### How to Split:
+
+1. **Identify Feature Areas**
+   - Split the app by major features or domains (e.g., Auth, Admin, Products, Orders).
+
+2. **Create Feature Modules**
+   - Each feature gets its own module (e.g., `ProductsModule`, `OrdersModule`).
+   - Declare feature-specific components, directives, pipes in the module.
+
+3. **Use Shared and Core Modules**
+   - **SharedModule**: Common components, directives, pipes used across features.
+   - **CoreModule**: Singleton services, global config, and app-level providers.
+
+4. **Implement Lazy Loading**
+   - Use Angular Router’s `loadChildren` to load feature modules on demand.
+   ```typescript
+   const routes: Routes = [
+     { path: 'products', loadChildren: () => import('./products/products.module').then(m => m.ProductsModule) }
+   ];
+   ```
+
+5. **Organize Routing**
+   - Each feature module can have its own routing module for encapsulated navigation.
+
+6. **Standalone Components**
+   - Use for small, reusable components or where module structure adds unnecessary complexity.
+   - Can be routed directly or used within modules.
+
+## Example Structure
+
+```plaintext
+src/
+  app/
+    core/             --> CoreModule (singleton services, global config)
+    shared/           --> SharedModule (reusable components, pipes, directives)
+    products/         --> ProductsModule (feature)
+    orders/           --> OrdersModule (feature)
+    dashboard/        --> DashboardModule (feature)
+    app.component.ts  --> Can be standalone or in AppModule
+    app.module.ts     --> Root module (bootstraps app)
+```
+
+## Summary Table
+
+| Use Case                          | Prefer Modules              | Prefer Standalone Components     |
+|------------------------------------|-----------------------------|----------------------------------|
+| Large features/domains             | ✔️                           |                                  |
+| Lazy loading                      | ✔️                           |                                  |
+| App-wide services/config           | ✔️ (CoreModule)              |                                  |
+| Small, reusable, isolated pieces   |                             | ✔️                               |
+| Quick prototyping                  |                             | ✔️                               |
 
 # Routes
 
