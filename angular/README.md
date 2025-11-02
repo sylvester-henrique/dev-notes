@@ -117,9 +117,68 @@ Angular components have lifecycle hooks-special methods you can implement to rea
 - **ngOnDestroy**: Called just before Angular destroys the component. Used for cleanup.
 - **Others**: ngAfterViewInit, ngAfterContentInit, etc.
 
-# Dependency Injection
+# Data Binding
 
-TODO
+Data binding is one of the core concepts that enables communication between the component class (TypeScript) and its template (HTML). Data binding allows you to display data, respond to user input, and keep your application state synchronized with the UI
+
+## Data Binding Summary Table
+
+| Binding Type       | Syntax                | Direction               | Use Case                |
+|--------------------|-----------------------|-------------------------|-------------------------|
+| Interpolation      | `{{ value }}`         | Component → Template    | Display properties      |
+| Property Binding   | `[prop]="value"`      | Component → Template    | Set DOM properties      |
+| Attribute Binding  | `[attr.name]="v"`     | Component → Attribute   | Set HTML attributes     |
+| Event Binding      | `(event)="fn()"`      | Template → Component    | Handle user actions     |
+| Two-way Binding    | `[(ngModel)]`         | Both                    | Form fields             |
+
+## Best practices
+
+- Use interpolation for text content.
+- Use property binding for dynamic element properties.
+- Use event binding for handling user actions.
+- Use two-way binding for forms and user input.
+- Avoid using two-way binding unless necessary—prefer one-way bindings for clarity and maintainability
+
+## Property Binding vs Attribute Binding in Angular
+
+Understanding the distinction between property binding and attribute binding is essential for effective Angular development.
+
+### Property Binding
+
+**Property binding** sets a property on a DOM element, allowing dynamic, interactive behavior managed by the browser.
+
+```html
+<!-- Property binding: disables the button dynamically -->
+<button [disabled]="isDisabled">Save</button>
+```
+
+```typescript
+// In your component
+isDisabled = true; // Button will be disabled; if false, it will be enabled
+```
+
+The `[disabled]="isDisabled"` syntax binds the button's DOM property `disabled` to the component property `isDisabled`. The button will become enabled/disabled dynamically as the value changes.
+
+### Attribute Binding
+
+**Attribute binding** sets a static HTML attribute or custom data attribute on an element, useful for non-standard or metadata attributes.
+
+```html
+<!-- Attribute binding: sets a custom data attribute -->
+<button [attr.data-tracking-id]="trackingId">Save</button>
+```
+
+```typescript
+// In your component
+trackingId = 'btn-save-123';
+```
+
+The `[attr.data-tracking-id]="trackingId"` syntax assigns the `data-tracking-id` attribute to the button element. This is used for metadata, analytics, accessibility, or custom data attributes that are not managed by the browser's DOM API.
+
+| Binding Type     | Example                            | Purpose                                |
+|------------------|------------------------------------|----------------------------------------|
+| Property Binding | `[disabled]="isDisabled"`          | Dynamic, browser-managed properties    |
+| Attribute Binding| `[attr.data-tracking-id]="value"`  | Static/custom HTML attributes/data     |
 
 # Routes
 
