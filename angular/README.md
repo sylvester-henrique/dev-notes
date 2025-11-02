@@ -239,3 +239,46 @@ Types of Route Guards
 - **CanLoad**: Controls if a lazy-loaded module can be loaded.
 - **Resolve**: Pre-fetches data before activating a route.
 - **CanActivateChild**: Controls if child routes can be activated.
+
+# Dependency Injection
+
+Dependency Injection (DI) is a design pattern where dependencies (such as services) are supplied to a class rather than being created by the class itself. Angular implements DI using injectors and the `@Injectable` decorator, allowing you to inject services into components or other services via constructor parameters.
+
+## Services
+
+A service in Angular is a class that encapsulates reusable logic, such as data fetching, business rules, or state management, and is not directly tied to the UI. Services are injected into components or other services. Components, on the other hand, control a section of the UI, manage templates, and handle user interactions.
+
+## Benefits of Using Services & DI
+
+- **Code Reusability**: Share logic across multiple components.
+- **Testability**: Easily mock services for unit testing.
+- **Loose Coupling**: Components depend on abstractions, not concrete classes.
+- **Scalability and Separation of Concerns**: Manage complex logic outside of components.
+
+## Service Lifetime: When Are Instances Created?
+
+- **Root Level:** Created once when the app starts.
+- **Component Level:** Created each time the component is instantiated.
+- **Module Level:**
+  - **Eagerly loaded:** Created when the module is loaded with the app.
+  - **Lazy-loaded:** Created when the module is first loaded via navigation.
+
+## Visual Summary
+
+```plaintext
+App Root Injector
+│
+├── Singleton Service (providedIn: 'root')
+│
+├── Eagerly Loaded Module
+│     └── Module Service (singleton across app)
+│
+└── Lazy-Loaded Module (via Router)
+      └── Module Service (singleton within this lazy-loaded module only)
+```
+
+## Best Practices
+
+- Use `providedIn: 'root'` for app-wide singletons and shared logic.
+- Provide services at the **component level** for isolated, per-instance state.
+- Use **lazy-loaded module providers** for features that need isolated state or should not share service instances with the rest of the app.  
