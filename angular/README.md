@@ -282,3 +282,95 @@ App Root Injector
 - Use `providedIn: 'root'` for app-wide singletons and shared logic.
 - Provide services at the **component level** for isolated, per-instance state.
 - Use **lazy-loaded module providers** for features that need isolated state or should not share service instances with the rest of the app.  
+
+# Forms 
+
+Angular provides two powerful approaches for handling forms: **template-driven forms** and **reactive forms**. Each has its own strengths and use cases.
+
+## Template-Driven Forms
+
+- Form logic is primarily defined in the HTML template.
+- Suitable for simple forms and quick prototyping.
+- Uses Angular directives like `ngModel` for two-way binding.
+- Less code in TypeScript, more declarative in HTML.
+- Relies on `FormsModule`.
+- Validation handled via HTML attributes and directives.
+
+### Example
+
+```typescript
+// app.module.ts
+import { FormsModule } from '@angular/forms';
+
+@NgModule({
+  imports: [FormsModule]
+})
+export class AppModule {}
+```
+
+```html
+<form #form="ngForm" (ngSubmit)="onSubmit(form.value)">
+  <input name="username" [(ngModel)]="username" required>
+  <input name="email" [(ngModel)]="email" email>
+  <button type="submit">Submit</button>
+</form>
+```
+
+## Reactive Forms
+
+- Form logic is defined in the component class using model-driven APIs.
+- Suitable for complex, dynamic, or large forms.
+- Uses `FormControl`, `FormGroup`, and `FormBuilder`.
+- Explicit and programmatic control over form structure and validation.
+- Relies on `ReactiveFormsModule`.
+- Validation handled in TypeScript with validators.
+
+### Example
+
+```typescript
+// app.module.ts
+import { ReactiveFormsModule } from '@angular/forms';
+
+@NgModule({
+  imports: [ReactiveFormsModule]
+})
+export class AppModule {}
+```
+
+```typescript
+// component.ts
+import { FormGroup, FormControl, Validators } from '@angular/forms';
+
+form = new FormGroup({
+  username: new FormControl('', Validators.required),
+  email: new FormControl('', [Validators.required, Validators.email])
+});
+
+onSubmit() {
+  console.log(this.form.value);
+}
+```
+
+```html
+<form [formGroup]="form" (ngSubmit)="onSubmit()">
+  <input formControlName="username">
+  <input formControlName="email">
+  <button type="submit">Submit</button>
+</form>
+```
+
+## Comparison Table
+
+| Feature                | Template-Driven         | Reactive                        |
+|------------------------|------------------------|----------------------------------|
+| Form definition        | In template            | In TypeScript                   |
+| Validation             | Template directives    | Validators in TypeScript        |
+| Best for               | Simple forms           | Complex/dynamic forms           |
+| Module required        | FormsModule            | ReactiveFormsModule             |
+| Testability            | Harder                 | Easier                          |
+| Dynamic forms          | Difficult              | Easy                            |
+
+## When to Use Which?
+
+- **Use Template-Driven Forms:** For simple, straightforward forms where you want to keep logic in the template.
+- **Use Reactive Forms:** For complex forms, dynamic validation, conditional fields, or when you need full programmatic control and easier testing.
