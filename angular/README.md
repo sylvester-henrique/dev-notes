@@ -2,9 +2,12 @@
 
 - [Components](#components)
 - [Components lifecycle Hooks](#components-lifecycle-hooks)
-- [Dependency Injection](#dependency-injection)
+- [Data Binding](#data-binding)
+- [Pipes](#pipes)
+- [Modules](#modules)
 - [Routes](#routes)
-- [Signals](#signals)
+- [Dependency Injection](#dependency-injection)
+- [Forms](#forms)
 
 # Components
 
