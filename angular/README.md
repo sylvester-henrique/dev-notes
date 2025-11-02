@@ -210,10 +210,32 @@ A pipe is a simple function that takes an input value and returns a transformed 
 - Keep custom pipes simple and focused on transformation.
 - For complex logic or filtering large data sets, prefer handling it in the component instead of a pipe for better performance.
 
+# Modules
+
+Purpose of Modules
+
+- **Organization**: Divide your app into logical units (e.g., features, shared utilities).
+- **Encapsulation**: Hide internal implementation details from other parts of your app.
+- **Dependency Management**: Declare dependencies (services, other modules).
+- **Lazy Loading**: Load parts of your app on demand for better performance.
+
+TODO: talk about when to use module vs standalone components. How would you split a large Angular application into multiple modules?
+
 # Routes
 
-TODO
+ Routing is the mechanism that enables navigation between different views or components in your single-page application (SPA). The Angular Router **maps URLs to components**, **manages browser history**, and supports advanced features like **lazy loading** and **route guards**.
 
-# Signals
+## Lazy loading
 
-TODO
+Lazy loading is a technique where modules (and their associated components, services, etc.) are loaded only when the user navigates to a route that requires them, rather than loading everything up front. This improves app performance, especially for large applications.
+
+## Guards
+
+Route guards are services that control whether a user can access or activate a route. They help protect routes based on permissions, authentication, data availability, or other conditions.
+
+Types of Route Guards
+- **CanActivate**: Controls if a route can be activated.
+- **CanDeactivate**: Controls if a route can be exited.
+- **CanLoad**: Controls if a lazy-loaded module can be loaded.
+- **Resolve**: Pre-fetches data before activating a route.
+- **CanActivateChild**: Controls if child routes can be activated.
