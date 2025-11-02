@@ -180,6 +180,36 @@ The `[attr.data-tracking-id]="trackingId"` syntax assigns the `data-tracking-id`
 | Property Binding | `[disabled]="isDisabled"`          | Dynamic, browser-managed properties    |
 | Attribute Binding| `[attr.data-tracking-id]="value"`  | Static/custom HTML attributes/data     |
 
+# Pipes
+
+A pipe is a simple function that takes an input value and returns a transformed value, which is then displayed in the template. Pipes are commonly used for display formatting such as dates, currency, uppercase/lowercase conversion, and more.
+
+## Using Pipes in Templates
+
+```html
+<!-- Uppercase pipe -->
+<p>{{ username | uppercase }}</p>
+<!-- If username is "Sylvester", output: "SYLVESTER" -->
+
+<!-- Date pipe with format -->
+<p>{{ birthday | date:'longDate' }}</p>
+<!-- If birthday is new Date(2025, 10, 1), output: "November 1, 2025" -->
+
+<!-- Currency pipe with currency code -->
+<p>{{ price | currency:'USD' }}</p>
+<!-- If price is 99.99, output: "$99.99" -->
+
+<!-- Slice pipe to extract part of a string -->
+<p>{{ name | slice:0:4 }}</p>
+<!-- If name is "Angular", output: "Angu" -->
+```
+
+## Pipes Best Practices
+
+- Use built-in pipes for common formatting needs.
+- Keep custom pipes simple and focused on transformation.
+- For complex logic or filtering large data sets, prefer handling it in the component instead of a pipe for better performance.
+
 # Routes
 
 TODO
