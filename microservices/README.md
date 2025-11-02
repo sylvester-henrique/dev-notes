@@ -2,7 +2,7 @@
 
 - [Introduction](#introduction)
 - [Architecture Patterns](#architecture-patterns)
-- [Communication](#communication)
+- [Communication Between Microservices](#communication-between-microservices)
 - [Data Management](#data-management)
 - [Deployment](#deployment)
 - [Monitoring and Observability](#monitoring-and-observability)
