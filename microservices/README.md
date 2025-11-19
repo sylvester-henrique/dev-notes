@@ -12,7 +12,7 @@
 
 # Introduction
 
-Microservices are a software development technique—a variant of the service-oriented architecture (SOA) architectural style that structures an application as a collection of loosely coupled services.
+Microservices are a software development technique—a variant of the service-oriented architecture (SOA) architectural style that structures an application as a collection of loosely coupled services. It is an architecture that divides an application into small, independent and deployable services that communicate with each other.
 
 ## Key characteristics of microservices
 
@@ -22,13 +22,64 @@ Microservices are a software development technique—a variant of the service-or
 - Failure isolation
 - Technology diversity
 
-# Architecture Patterns
+## Pros
 
-## Service Decomposition Patterns
+- **Deliver time:** delivery time for a feature is shorter, compared to a monolithic architecture, because it has smaller scope, with less changes to develop and test. Also, parallel development becomes more efficient, with each team working on services independently.
+- **Extensible:** add a new functionality to the whole system can be easier, this can be done by adding another microservice
+- **Smooth rollout of features:** when a new feature is released, it is only necessary to deploy one application rather than the entire system.
+- **Scalability:** each service can be scaled independently and horizontally, this optimizes resource usage.
+- **Resilience:** a failure or performance issues does not necessarily impacts the entire application, potentially improving resilience
+
+## Cons
+
+- **Overall complexity:** microservices are more complex to design, build and operate compared to monolith
+- **Data management:** enforcing data consistency across services is challenging, often requiring eventual consistency. Data synchronization may require a distributed event system, such as Kafka and RabbitMQ
+- **Communication overhead:** communication between services have more latency compared to in-memory calls in monolith applications
+- **Debugging:** troubleshooting is harder due to the distributed nature of microservices, requiring tools like distributed tracing
+- **Network dependency:** the communication is done over standard network protocols, so a network issue can interfere with the whole system
+
+# Architecture Patterns
 
 ## API Gateway Pattern
 
+A single entry point for clients, that handles authentication, authorization and routing.
+
 ## Database Patterns
+
+### Database per Service
+
+Each service has its own database to ensure data ownership and prevent tight coupling at data layer.
+
+## Service Decomposition Patterns
+
+Define services around business capabilities and responsibilities, ensure that services are cohesive and loosely coupled. Use the single responsibility principle.
+
+### Bounded Contexts
+
+Bounded contexts are a key concept in microservices architecture, originating from Domain-Driven Design (DDD). They define logical boundaries within which specific terms, entities, and operations have clear and consistent meanings. In microservices, each bounded context typically corresponds to a single service, ensuring that the service operates independently and avoids overlapping responsibilities. 
+
+For example, in an e-commerce application, a "product" might mean different things in different contexts: as an item in a shopping cart or an inventory in a warehouse. Each of these interpretations would belong to separate bounded contexts. This approach promotes loose coupling, scalability, and maintainability by isolating models and ensuring clarity within each service.
+
+## Event-Driven Architecture
+
+To provide decoupled communication between services, it uses asynchronous tools for communication.
+
+## Backends for Frontends (BFF)
+
+Create a separate backend for each type of client, such as desktop and mobile.
+
+**Benefits:**
+- **Avoid bloated API:** that serves multiple clients and become overcomplicated
+- **Meet requirements for specific needs:** For example, a mobile client app might need smaller and optimized payloads
+- **Group requests:** it can have endpoints that make requests to different microservices, so the client will need to make just one request to the specific backend
+
+## Strangler Fig Pattern
+
+During a migration from monolithic to microservices, this pattern suggests to gradually replace parts of the monolith by building microservices around it until all migration is complete.
+
+## Circuit Breaker Pattern
+
+TODO
 
 # Communication Between Microservices
 
@@ -104,6 +155,19 @@ When a user places an order, the order service can asynchronously notify the inv
 
 ## Event-Driven Architecture
 
+### Message Queuing Systems
+
+Messaging queue is an asynchronous form of communication between microservices. It has a producer that creates the message, and a consumer that reads the message. This type of system provides resilience, performance and scalability since it is asynchronous, so the producer does not need to wait for the consumer to receive the message.
+
+#### Publish-Subscribe (Pub/Sub) System
+
+When there is a producer and multiple consumers, a publish-subscribe system is used instead. The publish-subscribe (pub/sub) system has four key components:
+
+- **Messages:** A message is communication data sent from sender to receiver. Message data types can be anything from strings to complex objects representing text, video, sensor data, audio, or other digital content.
+- **Topics:** Every message has a topic associated with it. The topic acts like an intermediary channel between senders and receivers. It maintains a list of receivers who are interested in messages about that topic.
+- **Subscribers:** A subscriber is the message recipient. Subscribers have to register (or subscribe) to topics of interest. They can perform different functions or do something different with the message in parallel.
+- **Publishers:** The publisher is the component that sends messages. It creates messages about a topic and sends them once only to all subscribers of that topic. This interaction between the publisher and subscribers is a one-to-many relationship. The publisher doesn't need to know who is using the information it is broadcasting, and the subscribers don't need to know where the message comes from.
+
 # Data Management
 
 ## Database per Service
@@ -149,6 +213,11 @@ When a user places an order, the order service can asynchronously notify the inv
 # Best Practices
 
 ## Design Principles
+
+- **Define clear responsibilities:** Define services around business capabilities and responsibilities, ensure that services are cohesive and loosely coupled. Finally use the single responsibility principle.
+- **Implement observability:** Incorporate logging, monitoring and distributed tracing for effective debugging and performance analysis.
+- **Asynchronous communication:** Use asynchronous communication for scalability in scenarios where synchronous communication is not required. This is done through messaging systems.
+- **Use containers and orchestration framework:** Containers ensure that services get isolated, and allow to constraint CPU and memory usage. Also, orchestration tools make it easier to manage containers.
 
 ## Common Pitfalls
 
