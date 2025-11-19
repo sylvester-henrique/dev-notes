@@ -12,15 +12,7 @@
 
 # Introduction
 
-Microservices are a software development technique—a variant of the service-oriented architecture (SOA) architectural style that structures an application as a collection of loosely coupled services. It is an architecture that divides an application into small, independent and deployable services that communicate with each other.
-
-## Key characteristics of microservices
-
-- Independently deployable services
-- Business-focused services
-- Decentralized governance
-- Failure isolation
-- Technology diversity
+Microservices are a software development technique, a variant of the service-oriented architecture (SOA) architectural style, that structures an application as a collection of small, independent, and deployable services that communicate with each other. This architectural approach divides complex applications into loosely coupled services, each focused on specific business capabilities.
 
 ## Pros
 
