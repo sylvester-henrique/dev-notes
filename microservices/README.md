@@ -500,3 +500,12 @@ Multiple services share the same database schema.
 - **Assuming the Network is Reliable:** Failing to implement retries, timeouts, and circuit breakers. In a distributed system, network failures are inevitable.
 
 ## Performance Considerations
+
+- **Network Latency:** Every inter-service call adds latency.
+  - *Mitigation:* Minimize "chattiness" (too many fine-grained calls). Use coarse-grained APIs or aggregation patterns (API Gateway/GraphQL).
+- **Serialization Overhead:** JSON is human-readable but expensive to parse.
+  - *Mitigation:* Consider binary protocols like gRPC (Protobuf) for high-volume internal communication.
+- **Caching:** Essential for reducing latency and database load.
+  - *Strategy:* Implement caching at multiple levels: Client-side, API Gateway (CDN), and Service-level (Redis/Memcached).
+- **Asynchronous Processing:** Don't block the user for long-running tasks.
+  - *Strategy:* Accept the request, return "202 Accepted", and process the work in the background using a message queue.
