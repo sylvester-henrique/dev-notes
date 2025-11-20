@@ -164,7 +164,10 @@ Uses Domain-Driven Design (DDD) concepts. The domain is decomposed into subdomai
 - **Core Subdomain:** The key differentiator of the business (most valuable). This is where the best developers should work.
 - **Supporting Subdomain:** Necessary for the business but not a competitive advantage (e.g., Catalog in a standard e-commerce).
 - **Generic Subdomain:** Common functionality (e.g., Authentication, Notification) that is not specific to the business domain.
-- **Mapping:** Typically, each subdomain maps to one or more microservices.
+- **Mapping to Microservices:**
+  - **1-to-1:** Ideally, one Subdomain corresponds to one Bounded Context, which is implemented as one Microservice. This is the cleanest approach.
+  - **1-to-Many:** A complex Subdomain might be split into multiple Bounded Contexts (and thus multiple services).
+  - **Many-to-1:** Several simple Subdomains (especially Generic or Supporting ones) might be grouped into a single service to avoid infrastructure overhead.
 
 ### Bounded Contexts
 Bounded Context is the central pattern in Domain-Driven Design (DDD) for defining the boundaries of a model. To understand it, it helps to distinguish between the "Problem Space" and the "Solution Space":
