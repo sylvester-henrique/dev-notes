@@ -167,7 +167,12 @@ Uses Domain-Driven Design (DDD) concepts. The domain is decomposed into subdomai
 - **Mapping:** Typically, each subdomain maps to one or more microservices.
 
 ### Bounded Contexts
-Bounded Context is the central pattern in Domain-Driven Design (DDD) for defining the boundaries of a model. It is the "Solution Space" counterpart to the Subdomain's "Problem Space".
+Bounded Context is the central pattern in Domain-Driven Design (DDD) for defining the boundaries of a model. To understand it, it helps to distinguish between the "Problem Space" and the "Solution Space":
+
+- **Problem Space (Subdomains):** This is the raw business reality (e.g., "We need to ship items" or "We need to manage inventory"). It exists whether software exists or not.
+- **Solution Space (Bounded Contexts):** This is the strategic architectural decision we make to solve those problems (e.g., "We will build a Shipping Service with a specific model for packages").
+
+Ideally, a Bounded Context aligns with a Subdomain, but they are distinct concepts.
 
 - **Definition:** A specific boundary within which a domain model is defined and applicable. Inside this boundary, all terms, entities, and logic have a specific, unambiguous meaning (Ubiquitous Language).
 - **Ubiquitous Language:** A common language shared by developers and domain experts within that specific context. For example, "User" in the *Identity Context* might mean credentials and roles, while "User" in the *Shipping Context* might mean a name and address.
