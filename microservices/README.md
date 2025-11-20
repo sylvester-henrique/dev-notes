@@ -34,10 +34,6 @@
   - [Service-to-Service Security](#service-to-service-security)
   - [API Security](#api-security)
 - [Testing](#testing)
-  - [Unit Testing](#unit-testing)
-  - [Integration Testing](#integration-testing)
-  - [Contract Testing](#contract-testing)
-  - [End-to-End Testing](#end-to-end-testing)
 - [Best Practices](#best-practices)
   - [Design Principles](#design-principles)
   - [Common Pitfalls](#common-pitfalls)
@@ -488,17 +484,29 @@ Multiple services share the same database schema.
 
 ## Containerization
 
+TODO
+
 ## Orchestration
 
+TODO
+
 ## CI/CD
+
+TODO
 
 # Monitoring and Observability
 
 ## Distributed Tracing
 
+TODO
+
 ## Logging
 
+TODO
+
 ## Metrics
+
+TODO
 
 # Security
 
@@ -531,13 +539,7 @@ How do services trust each other?
 
 # Testing
 
-## Unit Testing
-
-## Integration Testing
-
-## Contract Testing
-
-## End-to-End Testing
+TODO
 
 # Best Practices
 
