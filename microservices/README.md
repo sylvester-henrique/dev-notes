@@ -7,9 +7,9 @@
   - [Example Domain Decomposition (E-commerce)](#example-domain-decomposition-e-commerce)
 - [Architecture Patterns](#architecture-patterns)
   - [Service Decomposition Patterns](#service-decomposition-patterns)
+  - [Load Balancing](#load-balancing)
   - [API Gateway Pattern](#api-gateway-pattern)
   - [Backends for Frontends (BFF)](#backends-for-frontends-bff)
-  - [Load Balancing](#load-balancing)
   - [Event-Driven Architecture](#event-driven-architecture)
   - [Strangler Fig Pattern](#strangler-fig-pattern)
   - [Circuit Breaker Pattern](#circuit-breaker-pattern)
@@ -132,6 +132,28 @@ Ideally, a Bounded Context aligns with a Subdomain, but they are distinct concep
   
   Instead of a single giant "Product" class, we have three smaller, specialized models in three different services.
 
+## Load Balancing
+
+Load balancing is the process of distributing network traffic across multiple servers to ensure that no single server bears too much demand. In microservices, where services are often replicated across multiple instances for scale and availability, load balancing is critical.
+
+### Types of Load Balancing
+
+#### 1. Server-Side Load Balancing
+The client sends a request to a load balancer (e.g., Nginx, HAProxy, AWS ELB), which acts as a proxy. The load balancer then forwards the request to one of the available service instances.
+- **Pros:** Simple for the client (it only needs to know the load balancer's address).
+- **Cons:** The load balancer can become a bottleneck and a single point of failure; adds an extra network hop.
+
+#### 2. Client-Side Load Balancing
+The client is responsible for determining which service instance to call. It queries a Service Registry (like Eureka or Consul) to get a list of available instances and uses a library (like Netflix Ribbon or gRPC client) to choose one.
+- **Pros:** No extra hop (better latency), eliminates the central bottleneck.
+- **Cons:** Client logic is more complex; load balancing logic must be implemented in every client language/framework used.
+
+### Common Algorithms
+- **Round Robin:** Requests are distributed sequentially to each server.
+- **Least Connections:** Sends the request to the instance with the fewest active connections.
+- **IP Hash:** Uses the client's IP address to determine which server receives the request (useful for session stickiness).
+- **Weighted:** Assigns more requests to more powerful servers.   
+
 ## API Gateway Pattern
 
 An API Gateway is a dedicated service that acts as the single entry point for external (and sometimes internal) clients to a system composed of multiple microservices. It receives client requests, orchestrates or proxies calls to underlying services, applies cross-cutting concerns (authentication, rate limiting, observability), and returns aggregated or transformed responses.
@@ -187,6 +209,18 @@ The API Gateway handles several key responsibilities that would otherwise need t
 - **Complexity:** Adds another moving part to the infrastructure that needs to be managed, deployed, and monitored.
 - **Development Bottleneck:** Can become a bottleneck for development if multiple teams need to update the gateway configuration frequently.
 
+### API Gateway vs. Load Balancer
+While both distribute traffic, they serve different purposes and often work together.
+
+- **Load Balancer:** Operates at a lower level (Transport Layer L4 or Application Layer L7). Its primary job is to distribute traffic across healthy instances of a *single* service (or the Gateway itself) to ensure availability and performance.
+- **API Gateway:** Operates at the Application Layer (L7). It understands the *business* logic of the request (routing based on path, headers, user identity) and performs orchestration.
+
+### Typical Request Flow
+1. **Client** sends a request.
+2. **External Load Balancer** (e.g., AWS ALB) receives the request and forwards it to one of the **API Gateway** instances.
+3. **API Gateway** processes the request (auth, rate limiting), looks up the destination service in the **Service Registry**.
+4. **API Gateway** (acting as an internal load balancer) forwards the request to a specific instance of the **Microservice**.
+
 ## Backends for Frontends (BFF)
 
 Create a separate backend for each type of client, such as desktop and mobile.
@@ -210,29 +244,7 @@ When deciding between a single API Gateway and the BFF pattern, consider the div
   - You have multiple client types with significantly different requirements (e.g., Mobile App vs. Web App vs. IoT device).
   - Mobile clients need minimized payloads to save bandwidth and battery.
   - Different teams manage different client applications and want autonomy to change their backend logic without coordinating with others.
-  - You want to optimize the API experience specifically for each client interface.
-
-## Load Balancing
-
-Load balancing is the process of distributing network traffic across multiple servers to ensure that no single server bears too much demand. In microservices, where services are often replicated across multiple instances for scale and availability, load balancing is critical.
-
-### Types of Load Balancing
-
-#### 1. Server-Side Load Balancing
-The client sends a request to a load balancer (e.g., Nginx, HAProxy, AWS ELB), which acts as a proxy. The load balancer then forwards the request to one of the available service instances.
-- **Pros:** Simple for the client (it only needs to know the load balancer's address).
-- **Cons:** The load balancer can become a bottleneck and a single point of failure; adds an extra network hop.
-
-#### 2. Client-Side Load Balancing
-The client is responsible for determining which service instance to call. It queries a Service Registry (like Eureka or Consul) to get a list of available instances and uses a library (like Netflix Ribbon or gRPC client) to choose one.
-- **Pros:** No extra hop (better latency), eliminates the central bottleneck.
-- **Cons:** Client logic is more complex; load balancing logic must be implemented in every client language/framework used.
-
-### Common Algorithms
-- **Round Robin:** Requests are distributed sequentially to each server.
-- **Least Connections:** Sends the request to the instance with the fewest active connections.
-- **IP Hash:** Uses the client's IP address to determine which server receives the request (useful for session stickiness).
-- **Weighted:** Assigns more requests to more powerful servers.  
+  - You want to optimize the API experience specifically for each client interface. 
 
 ## Event-Driven Architecture
 
