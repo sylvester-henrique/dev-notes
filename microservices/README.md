@@ -15,7 +15,7 @@
   - [Circuit Breaker Pattern](#circuit-breaker-pattern)
 - [Communication Between Microservices](#communication-between-microservices)
   - [Main Patterns of Communication](#main-patterns-of-communication)
-  - [Additional Considerations](#additional-considerations)
+  - [Communication Protocols](#communication-protocols)
   - [When to Use Asynchronous Communication vs. Synchronous Communication in Microservices](#when-to-use-asynchronous-communication-vs-synchronous-communication-in-microservices)
   - [Summary Table](#summary-table)
   - [Event-Driven Architecture](#event-driven-architecture-1)
@@ -366,6 +366,36 @@ Microservices communicate with each other primarily through APIs over network pr
 - Messages are sent to a queue/topic and processed independently.
 - **Pros:** Looser coupling, scalable, fault-tolerant.
 - **Cons:** More complex, eventual consistency.
+
+## Communication Protocols
+
+Choosing the right protocol is crucial for performance and developer experience.
+
+### 1. REST (Representational State Transfer)
+The most common protocol, typically using HTTP/1.1 and JSON.
+- **Use Case:** Public APIs, simple service-to-service communication.
+- **Pros:** Human-readable (JSON), ubiquitous support, easy to cache, stateless.
+- **Cons:** Verbose (text-based), no strict contract enforcement (unless using OpenAPI), over-fetching/under-fetching of data.
+
+### 2. gRPC (Google Remote Procedure Call)
+A high-performance framework developed by Google, using HTTP/2 and Protocol Buffers (binary serialization).
+- **Use Case:** Internal service-to-service communication (East-West traffic) where low latency is critical.
+- **Pros:**
+  - **Performance:** Binary data is much smaller and faster to parse than JSON.
+  - **Streaming:** Supports bi-directional streaming.
+  - **Strong Typing:** `.proto` files define a strict contract.
+- **Cons:** Not human-readable, requires code generation, limited browser support (requires gRPC-Web).
+
+### 3. GraphQL
+A query language for APIs that allows clients to request exactly the data they need.
+- **Use Case:** Backends for Frontends (BFF), aggregating data from multiple services for a UI.
+- **Pros:** Eliminates over-fetching/under-fetching, strongly typed schema.
+- **Cons:** Complexity in caching (POST requests), can be resource-intensive on the server (nested queries).
+
+### 4. Messaging Protocols (AMQP, MQTT)
+Used for asynchronous communication via message brokers.
+- **AMQP (RabbitMQ):** Reliable queuing, complex routing.
+- **Kafka Protocol:** High-throughput event streaming.
 
 ## Additional Considerations
 
