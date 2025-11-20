@@ -502,11 +502,32 @@ Multiple services share the same database schema.
 
 # Security
 
+Security in microservices is more complex than in monoliths because the attack surface is larger (more endpoints, more network traffic).
+
 ## Authentication and Authorization
+
+- **Authentication (AuthN):** Verifying who the user is.
+  - **Centralized Auth:** Use an Identity Provider (IdP) like Auth0, Keycloak, or Azure AD.
+  - **Pattern:** The API Gateway or a dedicated Identity Service handles login and issues a token (usually JWT).
+- **Authorization (AuthZ):** Verifying what the user is allowed to do.
+  - **Role-Based Access Control (RBAC):** Permissions based on user roles (e.g., Admin, User).
+  - **Token Propagation:** The JWT is passed to downstream services. Each service validates the token signature and checks claims (scopes/roles) to enforce permissions locally.
 
 ## Service-to-Service Security
 
+How do services trust each other?
+
+- **mTLS (Mutual TLS):** Both the client and server authenticate each other using certificates. It also encrypts the traffic. This is the gold standard (often implemented via Service Mesh like Istio).
+- **JWT Propagation:** Passing the user's JWT allows the downstream service to know who initiated the request.
+- **Client Credentials Flow (OAuth2):** If a service needs to call another service *on its own behalf* (background job), it requests its own token from the IdP.
+- **Network Policies:** Use firewall rules or Kubernetes Network Policies to restrict which services can talk to which (e.g., "Only the Order Service can call the Payment Service").
+
 ## API Security
+
+- **Rate Limiting:** Prevent abuse by limiting the number of requests a user/IP can make (implemented at API Gateway).
+- **Input Validation:** Sanitize all inputs to prevent Injection attacks (SQLi, XSS).
+- **HTTPS Everywhere:** Encrypt all external and internal traffic.
+- **API Keys:** For machine-to-machine communication with external partners.
 
 # Testing
 
