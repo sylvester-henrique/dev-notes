@@ -6,13 +6,13 @@
   - [Core Architectural Building Blocks](#core-architectural-building-blocks)
   - [Example Domain Decomposition (E-commerce)](#example-domain-decomposition-e-commerce)
 - [Architecture Patterns](#architecture-patterns)
-  - [API Gateway Pattern](#api-gateway-pattern)
   - [Service Decomposition Patterns](#service-decomposition-patterns)
-  - [Event-Driven Architecture](#event-driven-architecture)
+  - [API Gateway Pattern](#api-gateway-pattern)
   - [Backends for Frontends (BFF)](#backends-for-frontends-bff)
+  - [Load Balancing](#load-balancing)
+  - [Event-Driven Architecture](#event-driven-architecture)
   - [Strangler Fig Pattern](#strangler-fig-pattern)
   - [Circuit Breaker Pattern](#circuit-breaker-pattern)
-  - [Load Balancing](#load-balancing)
 - [Communication Between Microservices](#communication-between-microservices)
   - [Main Patterns of Communication](#main-patterns-of-communication)
   - [Additional Considerations](#additional-considerations)
@@ -94,6 +94,44 @@ Services might include:
 
 # Architecture Patterns
 
+## Service Decomposition Patterns
+
+One of the biggest challenges in microservices is defining the boundaries of each service. If boundaries are wrong, you end up with a distributed monolith (tight coupling).
+
+### Decompose by Business Capability
+Define services corresponding to business capabilities. A business capability is something that a business does in order to generate value.
+- **Example:** Order Management, Inventory Management, Shipping, Customer Management.
+- **Pros:** Stable architecture (business capabilities don't change often), easy to understand for business stakeholders.
+- **Cons:** Can lead to "God Services" if a capability is too broad.
+
+### Decompose by Subdomain (DDD)
+Uses Domain-Driven Design (DDD) concepts. The domain is decomposed into subdomains based on the complexity and value of the business logic.
+- **Core Subdomain:** The key differentiator of the business (most valuable). This is where the best developers should work.
+- **Supporting Subdomain:** Necessary for the business but not a competitive advantage (e.g., Catalog in a standard e-commerce).
+- **Generic Subdomain:** Common functionality (e.g., Authentication, Notification) that is not specific to the business domain.
+- **Mapping to Microservices:**
+  - **1-to-1:** Ideally, one Subdomain corresponds to one Bounded Context, which is implemented as one Microservice. This is the cleanest approach.
+  - **1-to-Many:** A complex Subdomain might be split into multiple Bounded Contexts (and thus multiple services).
+  - **Many-to-1:** Several simple Subdomains (especially Generic or Supporting ones) might be grouped into a single service to avoid infrastructure overhead.
+
+### Bounded Contexts
+Bounded Context is the central pattern in Domain-Driven Design (DDD) for defining the boundaries of a model. To understand it, it helps to distinguish between the "Problem Space" and the "Solution Space":
+
+- **Problem Space (Subdomains):** This is the raw business reality (e.g., "We need to ship items" or "We need to manage inventory"). It exists whether software exists or not.
+- **Solution Space (Bounded Contexts):** This is the strategic architectural decision we make to solve those problems (e.g., "We will build a Shipping Service with a specific model for packages").
+
+Ideally, a Bounded Context aligns with a Subdomain, but they are distinct concepts.
+
+- **Definition:** A specific boundary within which a domain model is defined and applicable. Inside this boundary, all terms, entities, and logic have a specific, unambiguous meaning (Ubiquitous Language).
+- **Ubiquitous Language:** A common language shared by developers and domain experts within that specific context. For example, "User" in the *Identity Context* might mean credentials and roles, while "User" in the *Shipping Context* might mean a name and address.
+- **Relationship to Microservices:** Ideally, one Bounded Context maps to one Microservice. This ensures high cohesion (everything related to that context is in one place) and loose coupling (internal changes don't leak out).
+- **Example:**
+  - **Catalog Context:** "Product" = Title, Description, Images, Specs.
+  - **Inventory Context:** "Product" = SKU, Quantity, Location, Reorder Level.
+  - **Sales Context:** "Product" = Price, Tax Rate, Discount.
+  
+  Instead of a single giant "Product" class, we have three smaller, specialized models in three different services.
+
 ## API Gateway Pattern
 
 An API Gateway is a dedicated service that acts as the single entry point for external (and sometimes internal) clients to a system composed of multiple microservices. It receives client requests, orchestrates or proxies calls to underlying services, applies cross-cutting concerns (authentication, rate limiting, observability), and returns aggregated or transformed responses.
@@ -149,43 +187,52 @@ The API Gateway handles several key responsibilities that would otherwise need t
 - **Complexity:** Adds another moving part to the infrastructure that needs to be managed, deployed, and monitored.
 - **Development Bottleneck:** Can become a bottleneck for development if multiple teams need to update the gateway configuration frequently.
 
-## Service Decomposition Patterns
+## Backends for Frontends (BFF)
 
-One of the biggest challenges in microservices is defining the boundaries of each service. If boundaries are wrong, you end up with a distributed monolith (tight coupling).
+Create a separate backend for each type of client, such as desktop and mobile.
 
-### Decompose by Business Capability
-Define services corresponding to business capabilities. A business capability is something that a business does in order to generate value.
-- **Example:** Order Management, Inventory Management, Shipping, Customer Management.
-- **Pros:** Stable architecture (business capabilities don't change often), easy to understand for business stakeholders.
-- **Cons:** Can lead to "God Services" if a capability is too broad.
+**Benefits:**
+- **Avoid bloated API:** that serves multiple clients and become overcomplicated
+- **Meet requirements for specific needs:** For example, a mobile client app might need smaller and optimized payloads
+- **Group requests:** it can have endpoints that make requests to different microservices, so the client will need to make just one request to the specific backend
 
-### Decompose by Subdomain (DDD)
-Uses Domain-Driven Design (DDD) concepts. The domain is decomposed into subdomains based on the complexity and value of the business logic.
-- **Core Subdomain:** The key differentiator of the business (most valuable). This is where the best developers should work.
-- **Supporting Subdomain:** Necessary for the business but not a competitive advantage (e.g., Catalog in a standard e-commerce).
-- **Generic Subdomain:** Common functionality (e.g., Authentication, Notification) that is not specific to the business domain.
-- **Mapping to Microservices:**
-  - **1-to-1:** Ideally, one Subdomain corresponds to one Bounded Context, which is implemented as one Microservice. This is the cleanest approach.
-  - **1-to-Many:** A complex Subdomain might be split into multiple Bounded Contexts (and thus multiple services).
-  - **Many-to-1:** Several simple Subdomains (especially Generic or Supporting ones) might be grouped into a single service to avoid infrastructure overhead.
+### Choosing between API Gateway vs BFF
 
-### Bounded Contexts
-Bounded Context is the central pattern in Domain-Driven Design (DDD) for defining the boundaries of a model. To understand it, it helps to distinguish between the "Problem Space" and the "Solution Space":
+When deciding between a single API Gateway and the BFF pattern, consider the diversity of your clients:
 
-- **Problem Space (Subdomains):** This is the raw business reality (e.g., "We need to ship items" or "We need to manage inventory"). It exists whether software exists or not.
-- **Solution Space (Bounded Contexts):** This is the strategic architectural decision we make to solve those problems (e.g., "We will build a Shipping Service with a specific model for packages").
+- **Use a Single API Gateway when:**
+  - You have a single client type (e.g., a web application).
+  - Multiple clients have very similar requirements and data needs.
+  - You want to minimize infrastructure complexity and maintenance overhead.
+  - The team is small, and managing multiple gateways would be overkill.
 
-Ideally, a Bounded Context aligns with a Subdomain, but they are distinct concepts.
+- **Use BFF (Backend for Frontend) when:**
+  - You have multiple client types with significantly different requirements (e.g., Mobile App vs. Web App vs. IoT device).
+  - Mobile clients need minimized payloads to save bandwidth and battery.
+  - Different teams manage different client applications and want autonomy to change their backend logic without coordinating with others.
+  - You want to optimize the API experience specifically for each client interface.
 
-- **Definition:** A specific boundary within which a domain model is defined and applicable. Inside this boundary, all terms, entities, and logic have a specific, unambiguous meaning (Ubiquitous Language).
-- **Ubiquitous Language:** A common language shared by developers and domain experts within that specific context. For example, "User" in the *Identity Context* might mean credentials and roles, while "User" in the *Shipping Context* might mean a name and address.
-- **Relationship to Microservices:** Ideally, one Bounded Context maps to one Microservice. This ensures high cohesion (everything related to that context is in one place) and loose coupling (internal changes don't leak out).
-- **Example:**
-  - **Catalog Context:** "Product" = Title, Description, Images, Specs.
-  - **Inventory Context:** "Product" = SKU, Quantity, Location, Reorder Level.
-  - **Sales Context:** "Product" = Price, Tax Rate, Discount.
-  
-  Instead of a single giant "Product" class, we have three smaller, specialized models in three different services.
+## Load Balancing
+
+Load balancing is the process of distributing network traffic across multiple servers to ensure that no single server bears too much demand. In microservices, where services are often replicated across multiple instances for scale and availability, load balancing is critical.
+
+### Types of Load Balancing
+
+#### 1. Server-Side Load Balancing
+The client sends a request to a load balancer (e.g., Nginx, HAProxy, AWS ELB), which acts as a proxy. The load balancer then forwards the request to one of the available service instances.
+- **Pros:** Simple for the client (it only needs to know the load balancer's address).
+- **Cons:** The load balancer can become a bottleneck and a single point of failure; adds an extra network hop.
+
+#### 2. Client-Side Load Balancing
+The client is responsible for determining which service instance to call. It queries a Service Registry (like Eureka or Consul) to get a list of available instances and uses a library (like Netflix Ribbon or gRPC client) to choose one.
+- **Pros:** No extra hop (better latency), eliminates the central bottleneck.
+- **Cons:** Client logic is more complex; load balancing logic must be implemented in every client language/framework used.
+
+### Common Algorithms
+- **Round Robin:** Requests are distributed sequentially to each server.
+- **Least Connections:** Sends the request to the instance with the fewest active connections.
+- **IP Hash:** Uses the client's IP address to determine which server receives the request (useful for session stickiness).
+- **Weighted:** Assigns more requests to more powerful servers.  
 
 ## Event-Driven Architecture
 
@@ -232,31 +279,6 @@ The event contains all the data the consumer needs (e.g., the full Order object)
 - **Complexity:** Harder to debug and trace flows (requires distributed tracing).
 - **Eventual Consistency:** Data is not consistent immediately across the system.
 
-## Backends for Frontends (BFF)
-
-Create a separate backend for each type of client, such as desktop and mobile.
-
-**Benefits:**
-- **Avoid bloated API:** that serves multiple clients and become overcomplicated
-- **Meet requirements for specific needs:** For example, a mobile client app might need smaller and optimized payloads
-- **Group requests:** it can have endpoints that make requests to different microservices, so the client will need to make just one request to the specific backend
-
-### Choosing between API Gateway vs BFF
-
-When deciding between a single API Gateway and the BFF pattern, consider the diversity of your clients:
-
-- **Use a Single API Gateway when:**
-  - You have a single client type (e.g., a web application).
-  - Multiple clients have very similar requirements and data needs.
-  - You want to minimize infrastructure complexity and maintenance overhead.
-  - The team is small, and managing multiple gateways would be overkill.
-
-- **Use BFF (Backend for Frontend) when:**
-  - You have multiple client types with significantly different requirements (e.g., Mobile App vs. Web App vs. IoT device).
-  - Mobile clients need minimized payloads to save bandwidth and battery.
-  - Different teams manage different client applications and want autonomy to change their backend logic without coordinating with others.
-  - You want to optimize the API experience specifically for each client interface.
-
 ## Strangler Fig Pattern
 
 During a migration from monolithic to microservices, this pattern suggests to gradually replace parts of the monolith by building microservices around it until all migration is complete.
@@ -264,28 +286,6 @@ During a migration from monolithic to microservices, this pattern suggests to gr
 ## Circuit Breaker Pattern
 
 TODO
-
-## Load Balancing
-
-Load balancing is the process of distributing network traffic across multiple servers to ensure that no single server bears too much demand. In microservices, where services are often replicated across multiple instances for scale and availability, load balancing is critical.
-
-### Types of Load Balancing
-
-#### 1. Server-Side Load Balancing
-The client sends a request to a load balancer (e.g., Nginx, HAProxy, AWS ELB), which acts as a proxy. The load balancer then forwards the request to one of the available service instances.
-- **Pros:** Simple for the client (it only needs to know the load balancer's address).
-- **Cons:** The load balancer can become a bottleneck and a single point of failure; adds an extra network hop.
-
-#### 2. Client-Side Load Balancing
-The client is responsible for determining which service instance to call. It queries a Service Registry (like Eureka or Consul) to get a list of available instances and uses a library (like Netflix Ribbon or gRPC client) to choose one.
-- **Pros:** No extra hop (better latency), eliminates the central bottleneck.
-- **Cons:** Client logic is more complex; load balancing logic must be implemented in every client language/framework used.
-
-### Common Algorithms
-- **Round Robin:** Requests are distributed sequentially to each server.
-- **Least Connections:** Sends the request to the instance with the fewest active connections.
-- **IP Hash:** Uses the client's IP address to determine which server receives the request (useful for session stickiness).
-- **Weighted:** Assigns more requests to more powerful servers.
 
 # Communication Between Microservices
 
