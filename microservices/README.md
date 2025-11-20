@@ -151,13 +151,33 @@ The API Gateway handles several key responsibilities that would otherwise need t
 
 ## Service Decomposition Patterns
 
-Define services around business capabilities and responsibilities, ensure that services are cohesive and loosely coupled. Use the single responsibility principle.
+One of the biggest challenges in microservices is defining the boundaries of each service. If boundaries are wrong, you end up with a distributed monolith (tight coupling).
+
+### Decompose by Business Capability
+Define services corresponding to business capabilities. A business capability is something that a business does in order to generate value.
+- **Example:** Order Management, Inventory Management, Shipping, Customer Management.
+- **Pros:** Stable architecture (business capabilities don't change often), easy to understand for business stakeholders.
+- **Cons:** Can lead to "God Services" if a capability is too broad.
+
+### Decompose by Subdomain (DDD)
+Uses Domain-Driven Design (DDD) concepts. The domain is decomposed into subdomains based on the complexity and value of the business logic.
+- **Core Subdomain:** The key differentiator of the business (most valuable). This is where the best developers should work.
+- **Supporting Subdomain:** Necessary for the business but not a competitive advantage (e.g., Catalog in a standard e-commerce).
+- **Generic Subdomain:** Common functionality (e.g., Authentication, Notification) that is not specific to the business domain.
+- **Mapping:** Typically, each subdomain maps to one or more microservices.
 
 ### Bounded Contexts
+Bounded Context is the central pattern in Domain-Driven Design (DDD) for defining the boundaries of a model. It is the "Solution Space" counterpart to the Subdomain's "Problem Space".
 
-Bounded contexts are a key concept in microservices architecture, originating from Domain-Driven Design (DDD). They define logical boundaries within which specific terms, entities, and operations have clear and consistent meanings. In microservices, each bounded context typically corresponds to a single service, ensuring that the service operates independently and avoids overlapping responsibilities. 
-
-For example, in an e-commerce application, a "product" might mean different things in different contexts: as an item in a shopping cart or an inventory in a warehouse. Each of these interpretations would belong to separate bounded contexts. This approach promotes loose coupling, scalability, and maintainability by isolating models and ensuring clarity within each service.
+- **Definition:** A specific boundary within which a domain model is defined and applicable. Inside this boundary, all terms, entities, and logic have a specific, unambiguous meaning (Ubiquitous Language).
+- **Ubiquitous Language:** A common language shared by developers and domain experts within that specific context. For example, "User" in the *Identity Context* might mean credentials and roles, while "User" in the *Shipping Context* might mean a name and address.
+- **Relationship to Microservices:** Ideally, one Bounded Context maps to one Microservice. This ensures high cohesion (everything related to that context is in one place) and loose coupling (internal changes don't leak out).
+- **Example:**
+  - **Catalog Context:** "Product" = Title, Description, Images, Specs.
+  - **Inventory Context:** "Product" = SKU, Quantity, Location, Reorder Level.
+  - **Sales Context:** "Product" = Price, Tax Rate, Discount.
+  
+  Instead of a single giant "Product" class, we have three smaller, specialized models in three different services.
 
 ## Event-Driven Architecture
 
