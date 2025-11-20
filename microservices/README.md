@@ -162,6 +162,28 @@ During a migration from monolithic to microservices, this pattern suggests to gr
 
 TODO
 
+## Load Balancing
+
+Load balancing is the process of distributing network traffic across multiple servers to ensure that no single server bears too much demand. In microservices, where services are often replicated across multiple instances for scale and availability, load balancing is critical.
+
+### Types of Load Balancing
+
+#### 1. Server-Side Load Balancing
+The client sends a request to a load balancer (e.g., Nginx, HAProxy, AWS ELB), which acts as a proxy. The load balancer then forwards the request to one of the available service instances.
+- **Pros:** Simple for the client (it only needs to know the load balancer's address).
+- **Cons:** The load balancer can become a bottleneck and a single point of failure; adds an extra network hop.
+
+#### 2. Client-Side Load Balancing
+The client is responsible for determining which service instance to call. It queries a Service Registry (like Eureka or Consul) to get a list of available instances and uses a library (like Netflix Ribbon or gRPC client) to choose one.
+- **Pros:** No extra hop (better latency), eliminates the central bottleneck.
+- **Cons:** Client logic is more complex; load balancing logic must be implemented in every client language/framework used.
+
+### Common Algorithms
+- **Round Robin:** Requests are distributed sequentially to each server.
+- **Least Connections:** Sends the request to the instance with the fewest active connections.
+- **IP Hash:** Uses the client's IP address to determine which server receives the request (useful for session stickiness).
+- **Weighted:** Assigns more requests to more powerful servers.
+
 # Communication Between Microservices
 
 Microservices communicate with each other primarily through APIs over network protocols. The most common method is via HTTP RESTful APIs, but other protocols like gRPC, GraphQL, WebSockets, or message brokers (e.g., Kafka, RabbitMQ) are also used depending on requirements.
