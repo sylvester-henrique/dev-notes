@@ -315,7 +315,39 @@ Instead of rewriting the entire monolith from scratch ("Big Bang" rewrite), you 
 
 ## Circuit Breaker Pattern
 
-TODO
+The Circuit Breaker pattern prevents an application from repeatedly trying to execute an operation that's likely to fail. It acts like an electrical circuit breaker: when the number of failures crosses a threshold, the circuit "trips" (opens), and further calls are blocked immediately without waiting for a timeout.
+
+### States
+1.  **Closed (Normal):** Requests are allowed to pass through. The circuit breaker counts failures. If failures exceed a threshold (e.g., 50% failure rate), it trips to **Open**.
+2.  **Open (Failure):** Requests are blocked immediately, and an error (or fallback response) is returned. This gives the failing service time to recover. After a timeout period, it switches to **Half-Open**.
+3.  **Half-Open (Testing):** A limited number of requests are allowed to pass through to test if the service has recovered.
+    - If they succeed, the circuit resets to **Closed**.
+    - If they fail, it goes back to **Open**.
+
+### Why Use It?
+- **Prevents Cascading Failures:** Stops a failure in one service from taking down the entire system (e.g., by exhausting thread pools waiting for timeouts).
+- **Fail Fast:** Clients get an immediate response instead of waiting for a timeout.
+- **Resilience:** Allows the system to degrade gracefully (e.g., returning cached data or a default value) when a dependency is down.
+
+### Who is Responsible? (Implementation Strategies)
+The logic can reside in two places:
+
+1.  **Client-Side (Application Code):**
+    - The service *making the call* wraps the HTTP request in a circuit breaker block using a library.
+    - **Pros:** Fine-grained control, allows custom business logic fallbacks (e.g., "If Recommendation Service is down, return top 10 popular items").
+    - **Cons:** Language-specific implementation required for every service.
+    - **Tools:** Resilience4j (Java), Polly (.NET).
+
+2.  **Infrastructure-Side (Service Mesh):**
+    - A sidecar proxy (e.g., Envoy) intercepts network traffic and enforces the circuit breaking policies.
+    - **Pros:** Language-agnostic, consistent policy across the entire cluster, no code changes.
+    - **Cons:** Coarse-grained (usually just returns a 503 error), harder to implement complex business-logic fallbacks.
+    - **Tools:** Istio, Linkerd.
+
+### Tools
+- **Java:** Resilience4j, Hystrix (Maintenance mode).
+- **.NET:** Polly.
+- **Service Mesh:** Istio, Linkerd (can handle this at the infrastructure level).
 
 # Communication Between Microservices
 
