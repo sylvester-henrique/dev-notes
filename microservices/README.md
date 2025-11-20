@@ -189,7 +189,48 @@ Ideally, a Bounded Context aligns with a Subdomain, but they are distinct concep
 
 ## Event-Driven Architecture
 
-To provide decoupled communication between services, it uses asynchronous tools for communication.
+In an Event-Driven Architecture (EDA), services communicate by emitting and reacting to events. An **event** is a significant change in state (e.g., "OrderPlaced", "PaymentFailed").
+
+### Core Concepts
+- **Producer:** The service that detects the event and publishes it. It doesn't know who (if anyone) is listening.
+- **Consumer:** The service that subscribes to events and reacts to them.
+- **Event Channel:** The infrastructure (Message Broker) that transmits events (e.g., Kafka, RabbitMQ).
+
+### Messaging Models
+
+#### 1. Message Queuing (Point-to-Point)
+A message is sent to a specific queue and is processed by **only one** consumer.
+- **Behavior:** If multiple consumers listen to the queue, they compete for messages (load balancing).
+- **Use Case:** Distributing background jobs (e.g., image processing) among worker instances.
+
+#### 2. Publish-Subscribe (Pub/Sub)
+A message is sent to a **topic** and is delivered to **all** subscribers interested in that topic.
+- **Topics:** Logical channels that categorize messages.
+- **Subscribers:** Services that register interest in a topic. They process the same event independently and in parallel.
+- **Use Case:** notifying multiple services about a business event (e.g., "Order Placed" triggers Inventory, Shipping, and Email services).
+
+### Two Main Variations
+
+#### 1. Event Notification
+The event contains minimal information (e.g., `{"orderId": "123", "status": "shipped"}`).
+- **Behavior:** The consumer receives the event but often needs to call the producer's API to fetch more details (e.g., shipping address).
+- **Pros:** Simple payloads, low coupling regarding data structure.
+- **Cons:** Can lead to "API chatter" (consumers calling back producers).
+
+#### 2. Event-Carried State Transfer
+The event contains all the data the consumer needs (e.g., the full Order object).
+- **Behavior:** The consumer updates its own local copy of the data without calling the producer.
+- **Pros:** Decouples availability (consumer works even if producer is down), better performance (no callback).
+- **Cons:** Data duplication, eventual consistency complexity, larger message payloads.
+
+### Pros
+- **Decoupling:** Producers and consumers don't know about each other.
+- **Scalability:** Consumers can process events at their own pace (buffering).
+- **Resilience:** If a consumer is down, events are queued until it recovers.
+
+### Cons
+- **Complexity:** Harder to debug and trace flows (requires distributed tracing).
+- **Eventual Consistency:** Data is not consistent immediately across the system.
 
 ## Backends for Frontends (BFF)
 
@@ -317,21 +358,6 @@ When a user places an order, the order service can asynchronously notify the inv
 | High throughput, scalability  | Asynchronous               |
 | Long-running processes        | Asynchronous               |
 | Event-driven actions          | Asynchronous               |
-
-## Event-Driven Architecture
-
-### Message Queuing Systems
-
-Messaging queue is an asynchronous form of communication between microservices. It has a producer that creates the message, and a consumer that reads the message. This type of system provides resilience, performance and scalability since it is asynchronous, so the producer does not need to wait for the consumer to receive the message.
-
-#### Publish-Subscribe (Pub/Sub) System
-
-When there is a producer and multiple consumers, a publish-subscribe system is used instead. The publish-subscribe (pub/sub) system has four key components:
-
-- **Messages:** A message is communication data sent from sender to receiver. Message data types can be anything from strings to complex objects representing text, video, sensor data, audio, or other digital content.
-- **Topics:** Every message has a topic associated with it. The topic acts like an intermediary channel between senders and receivers. It maintains a list of receivers who are interested in messages about that topic.
-- **Subscribers:** A subscriber is the message recipient. Subscribers have to register (or subscribe) to topics of interest. They can perform different functions or do something different with the message in parallel.
-- **Publishers:** The publisher is the component that sends messages. It creates messages about a topic and sends them once only to all subscribers of that topic. This interaction between the publisher and subscribers is a one-to-many relationship. The publisher doesn't need to know who is using the information it is broadcasting, and the subscribers don't need to know where the message comes from.
 
 # Data Management
 
