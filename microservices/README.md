@@ -493,4 +493,10 @@ Multiple services share the same database schema.
 
 ## Common Pitfalls
 
+- **Distributed Monolith:** Creating a system where services are physically separated but logically tightly coupled. If you have to deploy multiple services together to release a feature, you have a distributed monolith.
+- **Shared Database:** Allowing multiple services to read/write to the same database tables. This breaks encapsulation and makes independent scaling impossible.
+- **Nano-services:** Creating services that are too small (e.g., a service for a single function). The overhead of communication and maintenance outweighs the benefits.
+- **Ignoring Infrastructure Complexity:** Underestimating the need for robust CI/CD, automation, and monitoring. Microservices require a mature DevOps culture.
+- **Assuming the Network is Reliable:** Failing to implement retries, timeouts, and circuit breakers. In a distributed system, network failures are inevitable.
+
 ## Performance Considerations
