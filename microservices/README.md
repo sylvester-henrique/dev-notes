@@ -378,12 +378,17 @@ The most common protocol, typically using HTTP/1.1 and JSON.
 
 ### 2. gRPC (Google Remote Procedure Call)
 A high-performance framework developed by Google, using HTTP/2 and Protocol Buffers (binary serialization).
-- **Use Case:** Internal service-to-service communication (East-West traffic) where low latency is critical.
+
+- **When to Use:**
+  - **Internal Microservices (East-West Traffic):** Ideal for communication between backend services where low latency and high throughput are critical.
+  - **Polyglot Environments:** Excellent when services are written in different languages (e.g., Go talking to Java), as code generation handles the translation.
+  - **Streaming Requirements:** When you need real-time bi-directional streaming (e.g., live updates, chat, large file transfers).
+  - **Strict Contracts:** When you need to enforce a strict interface between teams. The `.proto` file acts as the single source of truth.
 - **Pros:**
-  - **Performance:** Binary data is much smaller and faster to parse than JSON.
-  - **Streaming:** Supports bi-directional streaming.
-  - **Strong Typing:** `.proto` files define a strict contract.
-- **Cons:** Not human-readable, requires code generation, limited browser support (requires gRPC-Web).
+  - **Performance:** Binary data (Protobuf) is much smaller and faster to serialize/deserialize than JSON.
+  - **Efficiency:** HTTP/2 allows multiplexing multiple requests over a single connection.
+  - **Strong Typing:** Compile-time checking of data types reduces runtime errors.
+- **Cons:** Not human-readable (harder to debug with `curl`), requires code generation steps in the build process, limited browser support (requires gRPC-Web proxy).
 
 ### 3. GraphQL
 A query language for APIs that allows clients to request exactly the data they need.
