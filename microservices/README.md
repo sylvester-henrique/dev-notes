@@ -370,13 +370,13 @@ Microservices communicate with each other primarily through APIs over network pr
 
 Choosing the right protocol is crucial for performance and developer experience.
 
-### 1. REST (Representational State Transfer)
+### REST (Representational State Transfer)
 The most common protocol, typically using HTTP/1.1 and JSON.
 - **Use Case:** Public APIs, simple service-to-service communication.
 - **Pros:** Human-readable (JSON), ubiquitous support, easy to cache, stateless.
 - **Cons:** Verbose (text-based), no strict contract enforcement (unless using OpenAPI), over-fetching/under-fetching of data.
 
-### 2. gRPC (Google Remote Procedure Call)
+### gRPC (Google Remote Procedure Call)
 A high-performance framework developed by Google, using HTTP/2 and Protocol Buffers (binary serialization).
 
 - **When to Use:**
@@ -390,16 +390,26 @@ A high-performance framework developed by Google, using HTTP/2 and Protocol Buff
   - **Strong Typing:** Compile-time checking of data types reduces runtime errors.
 - **Cons:** Not human-readable (harder to debug with `curl`), requires code generation steps in the build process, limited browser support (requires gRPC-Web proxy).
 
-### 3. GraphQL
+### GraphQL
 A query language for APIs that allows clients to request exactly the data they need.
 - **Use Case:** Backends for Frontends (BFF), aggregating data from multiple services for a UI.
 - **Pros:** Eliminates over-fetching/under-fetching, strongly typed schema.
 - **Cons:** Complexity in caching (POST requests), can be resource-intensive on the server (nested queries).
 
-### 4. Messaging Protocols (AMQP, MQTT)
+### Messaging Protocols (AMQP, MQTT)
 Used for asynchronous communication via message brokers.
 - **AMQP (RabbitMQ):** Reliable queuing, complex routing.
 - **Kafka Protocol:** High-throughput event streaming.
+
+### WebSockets
+A protocol providing full-duplex communication channels over a single TCP connection.
+- **Use Case:** Real-time applications requiring low latency updates (e.g., chat apps, live dashboards, gaming, collaborative editing).
+- **Pros:**
+  - **Real-time:** Server can push data to the client instantly without polling.
+  - **Low Overhead:** Persistent connection reduces the overhead of establishing new HTTP connections.
+- **Cons:**
+  - **Stateful:** The server must maintain an open connection for each client, which can be resource-intensive (requires horizontal scaling strategies like sticky sessions or Redis Pub/Sub).
+  - **Complexity:** Harder to load balance and handle connection drops/reconnects compared to stateless HTTP.
 
 ## Asynchronous Communication vs. Synchronous Communication
 
