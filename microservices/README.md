@@ -16,9 +16,8 @@
 - [Communication Between Microservices](#communication-between-microservices)
   - [Main Patterns of Communication](#main-patterns-of-communication)
   - [Communication Protocols](#communication-protocols)
-  - [When to Use Asynchronous Communication vs. Synchronous Communication in Microservices](#when-to-use-asynchronous-communication-vs-synchronous-communication-in-microservices)
+  - [Asynchronous Communication vs. Synchronous Communication](#asynchronous-communication-vs-synchronous-communication)
   - [Summary Table](#summary-table)
-  - [Event-Driven Architecture](#event-driven-architecture-1)
 - [Data Management](#data-management)
   - [Database per Service](#database-per-service)
   - [Shared Database (Anti-Pattern)](#shared-database-anti-pattern)
@@ -397,14 +396,7 @@ Used for asynchronous communication via message brokers.
 - **AMQP (RabbitMQ):** Reliable queuing, complex routing.
 - **Kafka Protocol:** High-throughput event streaming.
 
-## Additional Considerations
-
-- **Service Discovery:** Microservices need to locate each other dynamically, often using tools like Consul, Eureka, or Kubernetes DNS.
-- **API Gateway:** Handles routing, authentication, rate limiting, and monitoring for service-to-service and external communication.
-- **Security:** Services must authenticate and authorize requests, often using OAuth, JWT, or mTLS.
-- **Resilience:** Patterns like circuit breakers, retries, and timeouts help manage network failures.
-
-## When to Use Asynchronous Communication vs. Synchronous Communication in Microservices
+## Asynchronous Communication vs. Synchronous Communication
 
 Understanding when to use asynchronous communication over synchronous communication is crucial to designing scalable, resilient, and maintainable microservices architectures.
 
@@ -429,7 +421,6 @@ Understanding when to use asynchronous communication over synchronous communicat
 
 6. **Loose Coupling and Flexibility**  
    Asynchronous communication allows services to evolve independently, making the system more maintainable and adaptable.
-
 
 ### Synchronous Communication
 
