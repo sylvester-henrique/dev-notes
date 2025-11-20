@@ -115,12 +115,6 @@ The API Gateway handles several key responsibilities that would otherwise need t
 - **Complexity:** Adds another moving part to the infrastructure that needs to be managed, deployed, and monitored.
 - **Development Bottleneck:** Can become a bottleneck for development if multiple teams need to update the gateway configuration frequently.
 
-## Database Patterns
-
-### Database per Service
-
-Each service has its own database to ensure data ownership and prevent tight coupling at data layer.
-
 ## Service Decomposition Patterns
 
 Define services around business capabilities and responsibilities, ensure that services are cohesive and loosely coupled. Use the single responsibility principle.
@@ -257,11 +251,30 @@ When there is a producer and multiple consumers, a publish-subscribe system is u
 
 # Data Management
 
+Managing data in microservices is challenging because of the distributed nature of the architecture. Unlike monolithic applications where a single database handles transactions and consistency, microservices often require patterns to handle distributed data.
+
 ## Database per Service
 
-## Saga Pattern
+This is the default pattern for microservices. Each service has its own private database. Other services cannot access this database directly; they must communicate via the service's API.
 
-## CQRS (Command Query Responsibility Segregation)
+- **Polyglot Persistence:** Allows each service to choose the database technology that best suits its needs (e.g., Relational for accounting, NoSQL for product catalog, Graph for recommendations).
+- **Pros:**
+  - **Loose Coupling:** Changes to one service's database schema do not impact other services.
+  - **Independent Scaling:** Each database can be scaled according to the service's specific load.
+- **Cons:**
+  - **Cross-Service Queries:** Joining data from multiple services is difficult and often requires API composition or data replication.
+  - **Distributed Transactions:** Maintaining consistency across multiple services is complex (requires Sagas).
+
+## Shared Database (Anti-Pattern)
+
+Multiple services share the same database schema.
+
+- **Pros:** Simple to implement, supports ACID transactions easily.
+- **Cons:**
+  - **Tight Coupling:** Services become coupled to the database schema. Changing the schema requires coordinating all services.
+  - **Performance:** The database becomes a bottleneck and a single point of failure.
+  - **Scalability:** Hard to scale individual services' data needs independently.
+- **Use Case:** Sometimes acceptable for very small internal applications or during the initial migration from a monolith.
 
 # Deployment
 
