@@ -1,6 +1,6 @@
 # 📚 Table of Contents
 
-- [Introduction](#introduction)
+- [Overview](#overview)
 - [Architecture Patterns](#architecture-patterns)
 - [Communication Between Microservices](#communication-between-microservices)
 - [Data Management](#data-management)
@@ -10,7 +10,7 @@
 - [Testing](#testing)
 - [Best Practices](#best-practices)
 
-# Introduction
+# Overview
 
 Microservices are a software development technique, a variant of the service-oriented architecture (SOA) architectural style, that structures an application as a collection of small, independent, and deployable services that communicate with each other. This architectural approach divides complex applications into loosely coupled services, each focused on specific business capabilities.
 
@@ -29,6 +29,34 @@ Microservices are a software development technique, a variant of the service-ori
 - **Communication overhead:** communication between services have more latency compared to in-memory calls in monolith applications
 - **Debugging:** troubleshooting is harder due to the distributed nature of microservices, requiring tools like distributed tracing
 - **Network dependency:** the communication is done over standard network protocols, so a network issue can interfere with the whole system
+
+## Core Architectural Building Blocks
+
+- **API Gateway:** Unified entry point (routing, auth, rate limiting, aggregation).
+- **Service Discovery:** Dynamic registry of service instances (Consul, Eureka, Kubernetes DNS).
+- **Load Balancing:** Distributes traffic (sidecar proxy, gateway, ingress).
+- **Configuration Management:** Centralized, versioned config (Spring Cloud Config, Vault, SSM).
+- **Service Mesh (optional):** Sidecars handling mTLS, retries, circuit breaking, telemetry (Istio, Linkerd).
+- **Messaging/Event Backbone:** Kafka, RabbitMQ, Pulsar, NATS for async decoupling.
+- **Observability Stack:** 
+  - Logging (ELK, Loki)
+  - Metrics (Prometheus, OpenTelemetry metrics)
+  - Tracing (Jaeger, Tempo, Zipkin)
+- **Secrets Management:** Vault, AWS KMS, SSM Parameter Store.
+- **CI/CD Pipeline:** Automated build/test/deploy per service.
+
+## Example Domain Decomposition (E-commerce)
+
+Services might include:
+- User / Identity Service
+- Product Catalog Service
+- Inventory Service
+- Cart Service
+- Order Service
+- Payment Service
+- Shipping Service
+- Notification Service (email/SMS)
+- Review/Ratings Service
 
 # Architecture Patterns
 
