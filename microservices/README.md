@@ -62,7 +62,58 @@ Services might include:
 
 ## API Gateway Pattern
 
-A single entry point for clients, that handles authentication, authorization and routing.
+An API Gateway is a dedicated service that acts as the single entry point for external (and sometimes internal) clients to a system composed of multiple microservices. It receives client requests, orchestrates or proxies calls to underlying services, applies cross-cutting concerns (authentication, rate limiting, observability), and returns aggregated or transformed responses.
+
+It implements the Facade pattern for distributed systems, tailoring the external interface while hiding internal service topology and evolution.
+
+### Why Do We Need It?
+
+Direct client-to-microservice communication creates several challenges:
+
+- **Coupling:** Clients need to know the location and API of each individual service. If the internal architecture changes (e.g., splitting a service), the client code must be updated.
+- **Too Many Round Trips:** A single page might require data from multiple services, leading to multiple network requests. This increases latency and consumes more battery on mobile devices.
+- **Security Risks:** Exposing all microservices directly to the internet increases the attack surface. It is harder to secure hundreds of endpoints than a single entry point.
+- **Cross-Cutting Concerns:** Logic for authentication, SSL termination, rate limiting, and logging would need to be implemented in every single microservice or in the client.
+- **Protocol Issues:** Some services might use protocols that are not web-friendly (e.g., AMQP or binary gRPC), making it difficult for browsers to consume them directly.
+
+The API Gateway solves these issues by acting as an intermediary that abstracts the backend complexity from the client.
+
+### Core Responsibilities
+
+The API Gateway handles several key responsibilities that would otherwise need to be implemented in each microservice or the client:
+
+- **Request Routing & Mediation:** Routes incoming requests to the appropriate microservice. It can also handle protocol translation (e.g., HTTP to gRPC) and payload transformation.
+- **Security:** Acts as the first line of defense. Handles authentication (verifying identity), authorization (checking permissions), SSL/TLS termination, and protection against threats like SQL injection or DDoS attacks (WAF).
+- **Traffic Management:** Controls the flow of traffic to backend services. This includes rate limiting (limiting requests per user), throttling, and load balancing.
+- **Aggregation:** Combines results from multiple microservices into a single response to reduce the number of network calls the client needs to make.
+- **Resilience:** Implements patterns to prevent cascading failures, such as circuit breakers, retries with exponential backoff, and timeouts.
+- **Observability:** Centralizes logging, metrics (latency, error rates), and distributed tracing to provide visibility into traffic and system health.
+- **Performance Optimization:** Improves performance through response caching, compression (e.g., Gzip), and connection pooling.
+- **Release Strategies:** Supports advanced deployment strategies like Canary releases (routing a small % of traffic to new version) and Blue/Green deployments.
+
+### Migration Path (Monolith → Gateway → Microservices)
+
+1. Introduce gateway in front of monolith for auth, rate limiting.
+2. Extract first microservice (e.g., static assets, notifications).
+3. Add routes mapping: some paths go to monolith, others to new services.
+4. Iteratively shift endpoints as you carve out domains.
+5. Introduce aggregation for composite pages to reduce client changes.
+6. Optimize with caching, circuit breaking, observability upgrades.
+
+### Pros
+
+- **Encapsulation:** Hides the internal structure of the application from the client. Clients interact with the gateway, not individual services.
+- **Simplified Client Code:** Clients don't need to handle cross-cutting concerns like authentication, SSL termination, or service discovery.
+- **Protocol Translation:** Can translate between web-friendly protocols (HTTP/JSON) and internal protocols (gRPC, AMQP).
+- **Reduced Latency:** Can aggregate multiple requests into a single request, reducing round trips for the client.
+- **Security:** Centralized place to implement security policies (authentication, authorization, rate limiting).
+
+### Cons
+
+- **Single Point of Failure:** If the gateway goes down, the entire application becomes inaccessible. High availability setup is crucial.
+- **Performance Bottleneck:** All traffic goes through the gateway, so it can become a bottleneck if not scaled properly.
+- **Complexity:** Adds another moving part to the infrastructure that needs to be managed, deployed, and monitored.
+- **Development Bottleneck:** Can become a bottleneck for development if multiple teams need to update the gateway configuration frequently.
 
 ## Database Patterns
 
@@ -92,6 +143,22 @@ Create a separate backend for each type of client, such as desktop and mobile.
 - **Avoid bloated API:** that serves multiple clients and become overcomplicated
 - **Meet requirements for specific needs:** For example, a mobile client app might need smaller and optimized payloads
 - **Group requests:** it can have endpoints that make requests to different microservices, so the client will need to make just one request to the specific backend
+
+### Choosing between API Gateway vs BFF
+
+When deciding between a single API Gateway and the BFF pattern, consider the diversity of your clients:
+
+- **Use a Single API Gateway when:**
+  - You have a single client type (e.g., a web application).
+  - Multiple clients have very similar requirements and data needs.
+  - You want to minimize infrastructure complexity and maintenance overhead.
+  - The team is small, and managing multiple gateways would be overkill.
+
+- **Use BFF (Backend for Frontend) when:**
+  - You have multiple client types with significantly different requirements (e.g., Mobile App vs. Web App vs. IoT device).
+  - Mobile clients need minimized payloads to save bandwidth and battery.
+  - Different teams manage different client applications and want autonomy to change their backend logic without coordinating with others.
+  - You want to optimize the API experience specifically for each client interface.
 
 ## Strangler Fig Pattern
 
