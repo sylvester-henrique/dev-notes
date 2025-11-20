@@ -293,7 +293,25 @@ The event contains all the data the consumer needs (e.g., the full Order object)
 
 ## Strangler Fig Pattern
 
-During a migration from monolithic to microservices, this pattern suggests to gradually replace parts of the monolith by building microservices around it until all migration is complete.
+The Strangler Fig Pattern is the most popular strategy for migrating a monolithic application to microservices. It is named after the strangler fig tree, which grows around a host tree and eventually replaces it.
+
+### How It Works
+Instead of rewriting the entire monolith from scratch ("Big Bang" rewrite), you gradually replace specific functionalities with new microservices.
+
+1.  **Identify:** Select a specific functionality (Bounded Context) within the monolith to migrate (e.g., "User Profile").
+2.  **Transform:** Build a new microservice that implements this functionality.
+3.  **Coexist:** Place an API Gateway or Proxy in front of the system. Configure it to route requests for the new functionality to the new microservice, while all other requests still go to the monolith.
+4.  **Eliminate:** Once the new service is stable and feature-complete, remove the old code from the monolith.
+5.  **Repeat:** Continue this process for other functionalities until the monolith is gone or reduced to a manageable size.
+
+### Pros
+- **Low Risk:** Migration happens in small, manageable steps. If something breaks, it's easy to revert.
+- **Incremental Value:** You can deliver new features in the new architecture immediately, without waiting for the whole migration to finish.
+- **No "Code Freeze":** The business can continue to add features to the monolith while migration is happening (though it's better to add them to new services).
+
+### Cons
+- **Complexity:** You have to manage two distinct systems (monolith + microservices) simultaneously for a long time.
+- **Data Synchronization:** If the monolith and the new service need to share data, you might need temporary synchronization mechanisms (e.g., double writes or CDC) until the data is fully migrated.
 
 ## Circuit Breaker Pattern
 
