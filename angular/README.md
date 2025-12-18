@@ -117,8 +117,9 @@ Angular components have lifecycle hooks-special methods you can implement to rea
 
 - **ngOnInit**: Called once after the component is initialized. Used for setup logic.
 - **ngOnChanges**: Called when input properties change.
+- **ngAfterViewInit**: Called once after Angular initializes the component's views and child views.
 - **ngOnDestroy**: Called just before Angular destroys the component. Used for cleanup.
-- **Others**: ngAfterViewInit, ngAfterContentInit, etc.
+- **Others**: ngDoCheck, ngAfterContentInit, ngAfterContentChecked, ngAfterViewChecked. 
 
 # Data Binding
 
