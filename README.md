@@ -10,6 +10,7 @@ Quick reference notes for programming concepts and technologies
 
 ### Frameworks, Platforms and Libraries
 - [Angular](./angular/README.md)
+- [Entity Framework](./entity-framework/README.md)
 
 ### Programming Concepts
 - [Microservices](./microservices/README.md) - Microservices architecture patterns and best practices
