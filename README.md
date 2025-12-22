@@ -9,6 +9,7 @@ Quick reference notes for programming concepts and technologies
 - [TypeScript](./typescript/README.md) - TypeScript fundamentals, types, and patterns
 
 ### Frameworks, Platforms and Libraries
+- [.NET Core](./dotnet/README.md)
 - [Angular](./angular/README.md)
 - [Entity Framework](./entity-framework/README.md)
 
