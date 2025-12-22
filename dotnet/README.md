@@ -11,7 +11,7 @@
 - [IQuerable vs IEnumerable](#iquerable-vs-ienumerable)
 - [.NET Core Aspects](#net-core-aspects)
 - [How do you enable CORS in a .NET Core API project?](#how-do-you-enable-cors-in-a-net-core-api-project)
-- [How do you handle versioning in a Web API?](#how-do-you-handle-versioning-in-a-web-api)
+- [Web API versioning](#web-api-versioning)
 - [How can you improve the performance of a .NET Core application?](#how-can-you-improve-the-performance-of-a-net-core-application)
 - [What is response caching, and how do you implement it in .NET Core?](#what-is-response-caching-and-how-do-you-implement-it-in-net-core)
 - [What is garbage collection, and how does it work in .NET Core?](#what-is-garbage-collection-and-how-does-it-work-in-net-core)
@@ -232,13 +232,114 @@ public class CustomHealthCheck : IHealthCheck
 - Use IEnumerable for in-memory collections.
 - Use IQueryable for querying external data sources like databases—because the query can be optimized and run remotely.
 
-## .NET Core Aspects
-
-TODO
-
 ## How do you enable CORS in a .NET Core API project?
 
-## How do you handle versioning in a Web API?
+## Web API versioning
+
+API versioning allows you to evolve your API over time while maintaining backward compatibility for existing clients. .NET Core provides multiple strategies for implementing API versioning.
+
+### Why version your API?
+
+- **Backward compatibility**: Allow old clients to continue working while introducing new features
+- **Gradual migration**: Give clients time to migrate to new versions
+- **Breaking changes**: Introduce breaking changes without disrupting existing users
+- **Multiple clients**: Support different client versions simultaneously
+
+### Versioning Strategies
+
+**1. URL Path Versioning** (Most Common)
+```csharp
+// api/v1/products
+// api/v2/products
+[Route("api/v{version:apiVersion}/[controller]")]
+[ApiVersion("1.0")]
+[ApiController]
+public class ProductsV1Controller : ControllerBase
+{
+    [HttpGet]
+    public IActionResult Get() => Ok("Version 1.0");
+}
+
+[Route("api/v{version:apiVersion}/[controller]")]
+[ApiVersion("2.0")]
+[ApiController]
+public class ProductsV2Controller : ControllerBase
+{
+    [HttpGet]
+    public IActionResult Get() => Ok("Version 2.0");
+}
+```
+
+**2. Query String Versioning**
+```csharp
+// api/products?api-version=1.0
+// api/products?api-version=2.0
+[Route("api/[controller]")]
+[ApiVersion("1.0")]
+[ApiVersion("2.0")]
+[ApiController]
+public class ProductsController : ControllerBase
+{
+    [HttpGet]
+    [MapToApiVersion("1.0")]
+    public IActionResult GetV1() => Ok("Version 1.0");
+
+    [HttpGet]
+    [MapToApiVersion("2.0")]
+    public IActionResult GetV2() => Ok("Version 2.0");
+}
+```
+
+**3. Header Versioning**
+```csharp
+// Header: api-version: 1.0
+// Header: api-version: 2.0
+[Route("api/[controller]")]
+[ApiVersion("1.0")]
+[ApiVersion("2.0")]
+[ApiController]
+public class ProductsController : ControllerBase
+{
+    [HttpGet]
+    [MapToApiVersion("1.0")]
+    public IActionResult GetV1() => Ok("Version 1.0");
+
+    [HttpGet]
+    [MapToApiVersion("2.0")]
+    public IActionResult GetV2() => Ok("Version 2.0");
+}
+```
+
+**4. Media Type (Accept Header) Versioning**
+```csharp
+// Accept: application/json; version=1.0
+// Accept: application/json; version=2.0
+[Route("api/[controller]")]
+[ApiVersion("1.0")]
+[ApiVersion("2.0")]
+[ApiController]
+public class ProductsController : ControllerBase
+{
+    [HttpGet]
+    [MapToApiVersion("1.0")]
+    public IActionResult GetV1() => Ok("Version 1.0");
+
+    [HttpGet]
+    [MapToApiVersion("2.0")]
+    public IActionResult GetV2() => Ok("Version 2.0");
+}
+```
+
+### Best Practices
+
+- **Use URL path versioning** for public APIs - it's the most visible and discoverable
+- **Start with v1**, not v0 or v1.0.0 (keep it simple)
+- **Don't over-version** - only create a new version for breaking changes
+- **Document deprecation** - clearly communicate when a version will be sunset
+- **Support at least 2 versions** simultaneously to give clients time to migrate
+- **Version at the API level**, not individual endpoints (unless necessary)
+- **Use ApiVersion attribute** on controllers to be explicit about supported versions
+- **Set a default version** for clients that don't specify one
 
 ## How can you improve the performance of a .NET Core application?
 
