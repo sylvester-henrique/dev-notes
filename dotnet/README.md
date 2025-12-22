@@ -10,7 +10,7 @@
 - [Health check](#health-check)
 - [IQuerable vs IEnumerable](#iquerable-vs-ienumerable)
 - [.NET Core Aspects](#net-core-aspects)
-- [How do you enable CORS in a .NET Core API project?](#how-do-you-enable-cors-in-a-net-core-api-project)
+- [CORS (Cross-Origin Resource Sharing)](#cors-cross-origin-resource-sharing)
 - [Web API versioning](#web-api-versioning)
 - [How can you improve the performance of a .NET Core application?](#how-can-you-improve-the-performance-of-a-net-core-application)
 - [What is response caching, and how do you implement it in .NET Core?](#what-is-response-caching-and-how-do-you-implement-it-in-net-core)
@@ -232,7 +232,124 @@ public class CustomHealthCheck : IHealthCheck
 - Use IEnumerable for in-memory collections.
 - Use IQueryable for querying external data sources like databases—because the query can be optimized and run remotely.
 
-## How do you enable CORS in a .NET Core API project?
+## CORS (Cross-Origin Resource Sharing)
+
+CORS (Cross-Origin Resource Sharing) is a security feature that allows or restricts web applications running at one origin to access resources from a different origin. By default, browsers block cross-origin requests for security reasons.
+
+### Why CORS is needed?
+
+- **Browser security**: Browsers enforce the Same-Origin Policy, which prevents JavaScript from making requests to a different domain than the one serving the page
+- **API consumption**: Modern applications often have frontend (React, Angular, Vue) hosted on one domain and API on another
+- **Microservices**: Different services might be hosted on different domains or ports
+- **Third-party integrations**: Allow trusted external applications to consume your API
+
+### CORS concepts
+
+- **Origin**: Combination of protocol (http/https), domain, and port. `https://example.com:3000` is different from `https://example.com:8080`
+- **Preflight request**: Browser sends an OPTIONS request before the actual request to check if the server allows the cross-origin request
+- **CORS headers**: Server responds with headers indicating which origins, methods, and headers are allowed
+
+### Enabling CORS in .NET Core
+
+**1. Basic Setup - Allow All Origins (Development Only)**
+```csharp
+// Program.cs
+var builder = WebApplication.CreateBuilder(args);
+
+// Add CORS services
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
+builder.Services.AddControllers();
+
+var app = builder.Build();
+
+// Enable CORS middleware - must be before UseAuthorization
+app.UseCors();
+
+app.UseAuthorization();
+app.MapControllers();
+app.Run();
+```
+
+**2. Named Policy - Recommended for Production**
+```csharp
+// Program.cs
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("MyAllowedOrigins", policy =>
+    {
+        policy.WithOrigins(
+                "https://example.com",
+                "https://www.example.com",
+                "https://app.example.com"
+            )
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials(); // If you need cookies/auth headers
+    });
+});
+
+builder.Services.AddControllers();
+
+var app = builder.Build();
+
+// Use the named policy
+app.UseCors("MyAllowedOrigins");
+
+app.UseAuthorization();
+app.MapControllers();
+app.Run();
+```
+
+**3. Advanced Configuration**
+```csharp
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Advanced", policy =>
+    {
+        policy.WithOrigins("https://example.com")
+              .WithMethods("GET", "POST", "PUT", "DELETE")
+              .WithHeaders("Content-Type", "Authorization", "X-Custom-Header")
+              .WithExposedHeaders("X-Total-Count", "X-Pagination")
+              .SetPreflightMaxAge(TimeSpan.FromMinutes(10))
+              .AllowCredentials()
+              .SetIsOriginAllowed(origin => 
+              {
+                  // Custom logic to validate origin
+                  return origin.EndsWith(".example.com") || 
+                         origin == "https://localhost:3000";
+              });
+    });
+});
+```
+
+### Important CORS Headers
+
+- **Access-Control-Allow-Origin**: Specifies which origins can access the resource
+- **Access-Control-Allow-Methods**: Specifies which HTTP methods are allowed
+- **Access-Control-Allow-Headers**: Specifies which headers can be used
+- **Access-Control-Allow-Credentials**: Indicates whether cookies/auth can be sent
+- **Access-Control-Expose-Headers**: Headers that the browser should expose to the client
+- **Access-Control-Max-Age**: How long preflight results can be cached
+
+### Best Practices
+
+- **Never use AllowAnyOrigin() in production** - always specify allowed origins
+- **Use HTTPS origins** for production environments
+- **Be specific with methods and headers** - only allow what's necessary
+- **Consider environment-specific configurations** - different origins for dev/staging/prod
+- **Use SetPreflightMaxAge()** to reduce preflight requests
+
 
 ## Web API versioning
 
