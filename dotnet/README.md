@@ -1237,7 +1237,117 @@ public class DocumentsController : ControllerBase
 7. Server checks authorization for requested resource
 8. Server returns response or 401/403 status
 
-## What is the difference between cookie-based authentication and JWT in .NET Core?
+### Difference between cookie-based authentication and JWT
+
+Cookie-based and JWT authentication are two fundamentally different approaches to maintaining user authentication state in web applications. Each has distinct characteristics, advantages, and use cases.
+
+### Key Differences
+
+| Feature | Cookie-Based Authentication | JWT Authentication |
+|---------|----------------------------|---------------------|
+| **Storage Location** | Server (session store) | Client (local storage, memory) |
+| **State** | Stateful (server maintains session) | Stateless (token contains all info) |
+| **Transport** | Automatically sent by browser | Manually added to headers |
+| **Format** | Session ID (opaque identifier) | Encoded JSON with claims |
+| **Size** | Small cookie (~100 bytes) | Larger token (500-1000 bytes) |
+| **Scalability** | Requires session sharing across servers | Easily scales horizontally |
+| **Revocation** | Easy (delete server session) | Difficult (requires token blacklist) |
+| **Best For** | Traditional web apps (MVC, Razor) | APIs, SPAs, mobile apps |
+| **Cross-Domain** | Limited (same domain) | Works across domains |
+| **Expiration** | Server-controlled | Token-controlled |
+| **Security Storage** | HttpOnly cookies (safer) | Vulnerable if in localStorage |
+
+### Cookie-Based Authentication Deep Dive
+
+**How It Works:**
+1. User logs in with credentials
+2. Server validates credentials
+3. Server creates session and stores user data
+4. Server sends session ID in encrypted cookie
+5. Browser automatically includes cookie in subsequent requests
+6. Server looks up session using session ID
+7. Server retrieves user information from session store
+
+**Advantages:**
+- **Automatic handling**: Browser manages cookies automatically
+- **More secure**: HttpOnly cookies can't be accessed by JavaScript (XSS protection)
+- **Easy revocation**: Delete session on server to immediately invalidate
+- **Smaller payload**: Only session ID is transmitted
+- **Server control**: Full control over session lifetime and data
+- **Built-in CSRF protection**: Can use SameSite cookie attribute
+
+**Disadvantages:**
+- **Stateful**: Requires server-side session storage (memory, Redis, database)
+- **Scalability challenges**: Sessions must be shared across multiple servers
+- **Cross-domain limitations**: Cookies don't work well across different domains
+- **Not ideal for APIs**: Requires special handling for non-browser clients
+- **Memory overhead**: Server must maintain all active sessions
+
+**When to Use Cookie Authentication:**
+- Traditional server-rendered web applications (MVC, Razor Pages)
+- Applications where all pages are on the same domain
+- When you need immediate session revocation
+- When browser is the primary client
+- Enterprise intranet applications
+- When you want built-in CSRF protection
+
+### JWT Authentication Deep Dive
+
+**How It Works:**
+1. User logs in with credentials
+2. Server validates credentials
+3. Server generates JWT containing user claims
+4. Server sends JWT to client
+5. Client stores token (localStorage, sessionStorage, memory)
+6. Client includes token in Authorization header for each request
+7. Server validates token signature and expiration
+8. Server extracts claims from token (no database lookup needed)
+
+**JWT Structure:**
+```
+Header.Payload.Signature
+
+// Decoded example:
+{
+  "alg": "HS256",
+  "typ": "JWT"
+}
+.
+{
+  "sub": "user123",
+  "name": "John Doe",
+  "role": "Admin",
+  "exp": 1735824000
+}
+.
+SIGNATURE
+```
+
+**Advantages:**
+- **Stateless**: No server-side session storage needed
+- **Scalability**: Easy to scale horizontally (no session sharing)
+- **Cross-domain**: Works across different domains and services
+- **Microservices friendly**: Token can be validated by any service
+- **Mobile/SPA friendly**: Perfect for modern client applications
+- **Decentralized**: Services can validate tokens independently
+- **Rich payload**: Contains user claims without database lookup
+
+**Disadvantages:**
+- **Difficult revocation**: Can't invalidate token before expiration (must use blacklist)
+- **Token size**: Larger than cookies (affects bandwidth)
+- **XSS vulnerability**: If stored in localStorage, vulnerable to XSS attacks
+- **No automatic handling**: Must manually add to requests
+- **Token bloat**: Adding too many claims increases size
+- **Cannot update claims**: Must issue new token to change user info
+
+**When to Use JWT Authentication:**
+- RESTful APIs consumed by multiple client types
+- Single Page Applications (React, Angular, Vue)
+- Mobile applications
+- Microservices architectures
+- Cross-domain authentication
+- When scaling horizontally across multiple servers
+- When you don't want server-side session management
 
 ## How do you secure sensitive information in configuration files (e.g., appsettings.json)?
 
