@@ -93,7 +93,112 @@ When to use
 
 ## Health check
 
-TODO
+Health checks are endpoints that provide information about the health status of an application and its dependencies. They are essential for monitoring and ensuring system reliability, especially in distributed systems and microservices architectures.
+
+### Why use health checks?
+
+- Monitoring: allows monitoring tools to track application health and detect issues early
+- Load balancing: load balancers can route traffic away from unhealthy instances
+- Orchestration: container orchestrators like Kubernetes use health checks to restart or replace unhealthy containers
+- Dependencies validation: verify that critical dependencies (databases, APIs, external services) are available and responding
+
+### Types of health checks
+
+- Liveness: determines if the application is running and should continue to run. If it fails, the orchestrator should restart the application
+- Readiness: determines if the application is ready to accept requests. If it fails, the orchestrator should stop routing traffic to it until it recovers
+- Startup: used to determine if the application has completed its initialization. Useful for slow-starting applications
+
+### Implementation in .NET Core
+
+```csharp
+// Program.cs or Startup.cs
+public void ConfigureServices(IServiceCollection services)
+{
+    services.AddHealthChecks()
+        .AddCheck("self", () => HealthCheckResult.Healthy())
+        .AddSqlServer(connectionString, name: "database")
+        .AddUrlGroup(new Uri("https://api.example.com"), name: "external-api")
+        .AddCheck<CustomHealthCheck>("custom-check");
+    
+    services.AddHealthChecksUI().AddInMemoryStorage();
+}
+
+public void Configure(IApplicationBuilder app)
+{
+    app.UseRouting();
+    
+    app.UseEndpoints(endpoints =>
+    {
+        endpoints.MapHealthChecks("/health");
+        endpoints.MapHealthChecks("/health/ready", new HealthCheckOptions
+        {
+            Predicate = check => check.Tags.Contains("ready")
+        });
+        endpoints.MapHealthChecks("/health/live", new HealthCheckOptions
+        {
+            Predicate = _ => false // Only basic liveness
+        });
+        
+        // Detailed health check with JSON response
+        endpoints.MapHealthChecks("/health/details", new HealthCheckOptions
+        {
+            ResponseWriter = async (context, report) =>
+            {
+                context.Response.ContentType = "application/json";
+                var result = JsonSerializer.Serialize(new
+                {
+                    status = report.Status.ToString(),
+                    checks = report.Entries.Select(e => new
+                    {
+                        name = e.Key,
+                        status = e.Value.Status.ToString(),
+                        description = e.Value.Description,
+                        duration = e.Value.Duration.TotalMilliseconds
+                    })
+                });
+                await context.Response.WriteAsync(result);
+            }
+        });
+        
+        endpoints.MapHealthChecksUI();
+    });
+}
+```
+
+### Custom health check
+
+```csharp
+public class CustomHealthCheck : IHealthCheck
+{
+    private readonly IMyService _myService;
+    
+    public CustomHealthCheck(IMyService myService)
+    {
+        _myService = myService;
+    }
+    
+    public async Task<HealthCheckResult> CheckHealthAsync(
+        HealthCheckContext context,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var isHealthy = await _myService.IsAvailableAsync(cancellationToken);
+            
+            if (isHealthy)
+            {
+                return HealthCheckResult.Healthy("Service is available");
+            }
+            
+            return HealthCheckResult.Degraded("Service is slow");
+        }
+        catch (Exception ex)
+        {
+            return HealthCheckResult.Unhealthy("Service is unavailable", ex);
+        }
+    }
+}
+```
 
 ## IQuerable vs IEnumerable
 
