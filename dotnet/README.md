@@ -15,7 +15,7 @@
 - [How can you improve the performance of a .NET Core application?](#how-can-you-improve-the-performance-of-a-net-core-application)
 - [Response caching](#response-caching)
 - [What is garbage collection, and how does it work in .NET Core?](#what-is-garbage-collection-and-how-does-it-work-in-net-core)
-- [How do you implement authentication and authorization in .NET Core?](#how-do-you-implement-authentication-and-authorization-in-net-core)
+- [Authentication and authorization](#authentication-and-authorization)
 - [When to Use Task.Run in .NET](#when-to-use-taskrun-in-net)
 
 ## .NET Core and .NET Framework
@@ -787,7 +787,7 @@ public class ProductsController : ControllerBase
 }
 ```
 
-## How do you implement authentication and authorization in .NET Core?
+## Authentication and authorization?
 
 Authentication and authorization are critical security mechanisms in .NET Core applications. Authentication verifies who the user is, while authorization determines what the user can do.
 
