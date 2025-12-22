@@ -13,7 +13,7 @@
 - [CORS (Cross-Origin Resource Sharing)](#cors-cross-origin-resource-sharing)
 - [Web API versioning](#web-api-versioning)
 - [How can you improve the performance of a .NET Core application?](#how-can-you-improve-the-performance-of-a-net-core-application)
-- [What is response caching, and how do you implement it in .NET Core?](#what-is-response-caching-and-how-do-you-implement-it-in-net-core)
+- [Response caching](#response-caching)
 - [What is garbage collection, and how does it work in .NET Core?](#what-is-garbage-collection-and-how-does-it-work-in-net-core)
 - [How do you implement authentication and authorization in .NET Core?](#how-do-you-implement-authentication-and-authorization-in-net-core)
 - [When to Use Task.Run in .NET](#when-to-use-taskrun-in-net)
@@ -571,9 +571,221 @@ public class ProductsController : ControllerBase
 - **Use ApiVersion attribute** on controllers to be explicit about supported versions
 - **Set a default version** for clients that don't specify one
 
-## How can you improve the performance of a .NET Core application?
+## Response caching
 
-## What is response caching, and how do you implement it in .NET Core?
+Response caching stores HTTP responses to serve subsequent identical requests directly from cache instead of re-executing the request pipeline. This significantly improves performance and reduces server load.
+
+### Benefits of Response Caching
+
+- **Reduced server load**: Fewer requests reach the application logic
+- **Faster response times**: Cached responses are served immediately
+- **Lower bandwidth usage**: Content is served from cache (client or server)
+- **Better scalability**: Server can handle more concurrent users
+- **Reduced database calls**: Prevents repeated queries for the same data
+
+### Types of Caching in .NET Core
+
+**1. Response Caching (HTTP Caching)**
+- Uses HTTP cache headers to control caching behavior
+- Can be cached on client (browser), proxy servers, or server
+- Follows HTTP caching standards
+
+**2. In-Memory Caching**
+- Stores data in server memory
+- Fast but not shared across multiple server instances
+- Data is lost on application restart
+
+**3. Distributed Caching**
+- Shared cache across multiple servers (Redis, SQL Server, NCache)
+- Survives application restarts
+- Suitable for scaled-out applications
+
+### Response Caching Implementation
+
+**1. Basic Setup**
+
+```csharp
+// Program.cs
+var builder = WebApplication.CreateBuilder(args);
+
+// Add response caching service
+builder.Services.AddResponseCaching();
+
+builder.Services.AddControllers();
+
+var app = builder.Build();
+
+// Add response caching middleware - must be early in the pipeline
+app.UseResponseCaching();
+
+// Important: Place before controllers
+app.UseAuthorization();
+app.MapControllers();
+app.Run();
+```
+
+**2. Using ResponseCache Attribute**
+
+```csharp
+[ApiController]
+[Route("api/[controller]")]
+public class ProductsController : ControllerBase
+{
+    // Cache for 60 seconds
+    [HttpGet]
+    [ResponseCache(Duration = 60)]
+    public IActionResult GetAll()
+    {
+        var products = GetProducts(); // Expensive operation
+        return Ok(products);
+    }
+
+    // Cache for 5 minutes with specific location
+    [HttpGet("{id}")]
+    [ResponseCache(Duration = 300, Location = ResponseCacheLocation.Client)]
+    public IActionResult Get(int id)
+    {
+        var product = GetProduct(id);
+        return Ok(product);
+    }
+
+    // Don't cache this endpoint
+    [HttpPost]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+    public IActionResult Create(Product product)
+    {
+        // Create logic
+        return Ok(product);
+    }
+
+    // Cache and vary by query parameters
+    [HttpGet("search")]
+    [ResponseCache(Duration = 120, VaryByQueryKeys = new[] { "category", "price" })]
+    public IActionResult Search(string category, decimal? price)
+    {
+        var results = SearchProducts(category, price);
+        return Ok(results);
+    }
+}
+```
+
+**3. Custom Cache Key Logic**
+
+```csharp
+// Custom middleware for advanced caching logic
+public class CustomResponseCachingMiddleware
+{
+    private readonly RequestDelegate _next;
+
+    public CustomResponseCachingMiddleware(RequestDelegate next)
+    {
+        _next = next;
+    }
+
+    public async Task InvokeAsync(HttpContext context)
+    {
+        // Add custom cache key based on user role
+        var userRole = context.User.FindFirst("role")?.Value;
+        context.Response.Headers["Vary"] = "Role";
+        
+        await _next(context);
+    }
+}
+```
+
+### Important HTTP Cache Headers
+
+- **Cache-Control**: Primary directive for caching behavior
+  - `public`: Can be cached by any cache
+  - `private`: Only cached by client (browser)
+  - `no-cache`: Must revalidate with server before using cached copy
+  - `no-store`: Never cache the response
+  - `max-age=X`: Cache for X seconds
+- **ETag**: Entity tag for conditional requests (validation)
+- **Vary**: Specifies which request headers affect the cache key
+- **Expires**: Legacy header for cache expiration (prefer Cache-Control)
+- **Last-Modified**: When the resource was last changed
+
+### When NOT to Cache
+
+```csharp
+// User-specific data
+[ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+public IActionResult GetUserProfile() => Ok(currentUser);
+
+// Frequently changing data
+[ResponseCache(NoStore = true)]
+public IActionResult GetStockPrices() => Ok(prices);
+
+// Sensitive data
+[ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+public IActionResult GetBankingInfo() => Ok(bankData);
+
+// POST/PUT/DELETE operations
+[HttpPost]
+[ResponseCache(NoStore = true)]
+public IActionResult CreateOrder(Order order) => Ok();
+```
+
+### Best Practices
+
+- **Cache GET requests only** - POST, PUT, DELETE should not be cached
+- **Use appropriate durations** - balance freshness vs performance
+- **Consider user authentication** - don't cache user-specific data publicly
+- **Set appropriate Cache-Control** - use `private` for user-specific, `public` for shared
+- **Monitor cache hit ratio** - track effectiveness of caching strategy
+- **Combine with distributed cache** - for application-level caching needs
+- **Test cache behavior** - verify headers and caching with browser dev tools
+- **Consider CDN integration** - for static assets and public APIs
+
+### Distributed Caching (Bonus)
+
+For application-level caching across servers:
+
+```csharp
+// Program.cs - Redis distributed cache
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = "localhost:6379";
+    options.InstanceName = "MyApp_";
+});
+
+// Controller - Use distributed cache
+public class ProductsController : ControllerBase
+{
+    private readonly IDistributedCache _cache;
+    
+    public ProductsController(IDistributedCache cache)
+    {
+        _cache = cache;
+    }
+    
+    [HttpGet("{id}")]
+    public async Task<IActionResult> Get(int id)
+    {
+        var cacheKey = $"product_{id}";
+        var cachedData = await _cache.GetStringAsync(cacheKey);
+        
+        if (cachedData != null)
+        {
+            return Ok(JsonSerializer.Deserialize<Product>(cachedData));
+        }
+        
+        var product = await GetProductFromDatabase(id);
+        
+        await _cache.SetStringAsync(
+            cacheKey,
+            JsonSerializer.Serialize(product),
+            new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
+            }
+        );
+        
+        return Ok(product);
+    }
+}
+```
 
 ## What is garbage collection, and how does it work in .NET Core?
 
@@ -648,3 +860,5 @@ await Task.Run(async () => await SomeAsyncMethod());
 // ✅ GOOD
 await SomeAsyncMethod();
 ```
+
+## How can you improve the performance of a .NET Core application?
