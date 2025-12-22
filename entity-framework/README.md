@@ -9,6 +9,18 @@
   - [Pagination](#pagination)
   - [Asynchronous Operations](#asynchronous-operations)
 
+## What is Entity Framework Core, and how does it integrate with .NET Core?
+
+TODO
+
+## Explain Code-First vs. Database-First approaches.
+
+TODO
+
+## What are migrations, and how are they used in EF Core?
+
+TODO
+
 # Performance considerations
 
 ## DbContext Lifetime
