@@ -229,8 +229,121 @@ public class CustomHealthCheck : IHealthCheck
 
 ## IQuerable vs IEnumerable
 
-- Use IEnumerable for in-memory collections.
-- Use IQueryable for querying external data sources like databases—because the query can be optimized and run remotely.
+`IEnumerable<T>` and `IQueryable<T>` are both used for querying collections in .NET, but they work very differently and are suited for different scenarios.
+
+### Key Differences
+
+| Feature | IEnumerable<T> | IQueryable<T> |
+|---------|----------------|---------------|
+| **Namespace** | System.Collections.Generic | System.Linq |
+| **Execution** | Client-side (in-memory) | Server-side (remote) |
+| **Query Provider** | LINQ to Objects | LINQ to SQL/EF/etc |
+| **Best For** | In-memory collections | Database queries |
+| **Filtering** | After data is loaded | Before data is loaded |
+| **Expression Trees** | No | Yes |
+| **Inherits From** | - | IEnumerable<T> |
+
+### How They Work
+
+**IEnumerable<T>**
+- Executes queries **in-memory** using LINQ to Objects
+- All data is loaded into memory first, then filtering/sorting happens
+- Query logic is represented as **delegates** (Func<T>)
+- Best for small datasets already in memory
+
+**IQueryable<T>**
+- Executes queries **at the data source** (database, web service, etc.)
+- Only loads the filtered/sorted results into memory
+- Query logic is represented as **expression trees** that can be translated to SQL, REST calls, etc.
+- Best for large datasets stored remotely
+
+### Practical Example: Database Query
+
+```csharp
+// IEnumerable - BAD for database queries
+public IEnumerable<Product> GetExpensiveProducts_Bad()
+{
+    IEnumerable<Product> products = dbContext.Products; // Loads ALL products into memory
+    return products.Where(p => p.Price > 100); // Filtering happens in-memory
+}
+// SQL Generated: SELECT * FROM Products
+// Problem: All records are loaded, then filtered in memory!
+
+// IQueryable - GOOD for database queries
+public IQueryable<Product> GetExpensiveProducts_Good()
+{
+    IQueryable<Product> products = dbContext.Products; // No data loaded yet
+    return products.Where(p => p.Price > 100); // Filter is part of the query
+}
+// SQL Generated: SELECT * FROM Products WHERE Price > 100
+// Benefit: Only matching records are loaded!
+```
+
+### Deferred Execution
+
+Both `IEnumerable` and `IQueryable` use **deferred execution** - the query doesn't execute until you iterate over it.
+
+```csharp
+// Query is defined but not executed
+IQueryable<Product> query = dbContext.Products.Where(p => p.Price > 100);
+
+// Nothing happens yet
+query = query.OrderBy(p => p.Name);
+
+// NOW the query executes (database is hit)
+var results = query.ToList(); // or foreach, Count(), First(), etc.
+```
+
+### Common Pitfalls
+
+**1. Breaking the query with AsEnumerable()**
+```csharp
+// ❌ BAD - Loads all data then filters
+var result = dbContext.Products
+    .AsEnumerable() // Breaks IQueryable chain!
+    .Where(p => p.Price > 100)
+    .ToList();
+
+// ✅ GOOD - Filter happens in database
+var result = dbContext.Products
+    .Where(p => p.Price > 100)
+    .ToList();
+```
+
+**2. Using non-translatable methods**
+```csharp
+// ❌ BAD - Method can't be translated to SQL
+var result = dbContext.Products
+    .Where(p => MyCustomMethod(p.Name)) // Exception!
+    .ToList();
+
+// ✅ GOOD - Load data first, then use custom method
+var result = dbContext.Products
+    .ToList() // Execute query
+    .Where(p => MyCustomMethod(p.Name)) // Filter in memory
+    .ToList();
+```
+
+**3. Multiple enumeration of IQueryable**
+```csharp
+// ❌ BAD - Query executes multiple times
+IQueryable<Product> query = dbContext.Products.Where(p => p.Price > 100);
+int count = query.Count(); // Database hit #1
+var list = query.ToList(); // Database hit #2
+
+// ✅ GOOD - Execute once and materialize
+var list = dbContext.Products
+    .Where(p => p.Price > 100)
+    .ToList(); // Database hit once
+int count = list.Count; // In-memory count
+```
+
+### Summary
+
+- **IEnumerable**: Use for in-memory collections. Filtering happens client-side after data is loaded.
+- **IQueryable**: Use for external data sources (databases). Filtering happens server-side before data is loaded.
+- **Performance**: IQueryable is crucial for database queries to avoid loading unnecessary data.
+- **Rule of thumb**: Keep queries as IQueryable as long as possible, materialize with ToList() only when needed.
 
 ## CORS (Cross-Origin Resource Sharing)
 
