@@ -787,15 +787,463 @@ public class ProductsController : ControllerBase
 }
 ```
 
-## What is garbage collection, and how does it work in .NET Core?
-
 ## How do you implement authentication and authorization in .NET Core?
+
+Authentication and authorization are critical security mechanisms in .NET Core applications. Authentication verifies who the user is, while authorization determines what the user can do.
+
+### Key Concepts
+
+**Authentication**: The process of verifying the identity of a user or service
+- Confirms "who you are"
+- Uses credentials like username/password, tokens, certificates, or biometrics
+- Results in a ClaimsPrincipal representing the authenticated user
+
+**Authorization**: The process of determining what an authenticated user can access
+- Confirms "what you can do"
+- Checks permissions, roles, policies, or claims
+- Happens after authentication
+
+### Authentication Types in .NET Core
+
+**1. Cookie Authentication**
+- Session-based authentication
+- Server stores session data
+- Best for traditional web applications (MVC, Razor Pages)
+- Credentials are stored in encrypted cookies
+
+**2. JWT (JSON Web Token) Authentication**
+- Token-based authentication
+- Stateless - server doesn't store session data
+- Best for APIs, SPAs, and mobile applications
+- Tokens contain encoded claims and are self-contained
+
+**3. OAuth 2.0 / OpenID Connect**
+- Industry-standard protocols for authorization
+- Delegates authentication to external providers (Google, Microsoft, Facebook)
+- OpenID Connect adds identity layer on top of OAuth 2.0
+
+**4. Certificate Authentication**
+- Uses client certificates for authentication
+- Common in enterprise and B2B scenarios
+- Provides strong mutual authentication
+
+### Implementing Cookie Authentication
+
+```csharp
+// Program.cs
+var builder = WebApplication.CreateBuilder(args);
+
+// Add authentication services
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Account/Login";
+        options.LogoutPath = "/Account/Logout";
+        options.AccessDeniedPath = "/Account/AccessDenied";
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
+        options.SlidingExpiration = true; // Renew cookie on activity
+        options.Cookie.HttpOnly = true; // Prevent JavaScript access
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // HTTPS only
+        options.Cookie.SameSite = SameSiteMode.Strict; // CSRF protection
+    });
+
+builder.Services.AddAuthorization();
+builder.Services.AddControllersWithViews();
+
+var app = builder.Build();
+
+app.UseAuthentication(); // Must be before UseAuthorization
+app.UseAuthorization();
+
+app.MapControllers();
+app.Run();
+```
+
+```csharp
+// AccountController.cs
+[ApiController]
+[Route("[controller]")]
+public class AccountController : ControllerBase
+{
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] LoginModel model)
+    {
+        // Validate credentials (check against database)
+        if (!ValidateCredentials(model.Username, model.Password))
+        {
+            return Unauthorized("Invalid credentials");
+        }
+
+        // Create claims
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.Name, model.Username),
+            new Claim(ClaimTypes.Email, "user@example.com"),
+            new Claim(ClaimTypes.Role, "Admin"),
+            new Claim("CustomClaim", "CustomValue")
+        };
+
+        // Create identity
+        var claimsIdentity = new ClaimsIdentity(
+            claims, 
+            CookieAuthenticationDefaults.AuthenticationScheme);
+
+        // Create authentication properties
+        var authProperties = new AuthenticationProperties
+        {
+            IsPersistent = model.RememberMe,
+            ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(60)
+        };
+
+        // Sign in the user
+        await HttpContext.SignInAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            new ClaimsPrincipal(claimsIdentity),
+            authProperties);
+
+        return Ok("Login successful");
+    }
+
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout()
+    {
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        return Ok("Logged out");
+    }
+}
+```
+
+### Implementing JWT Authentication
+
+```csharp
+// Program.cs
+var builder = WebApplication.CreateBuilder(args);
+
+// Add JWT authentication
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+        };
+    });
+
+builder.Services.AddAuthorization();
+builder.Services.AddControllers();
+
+var app = builder.Build();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapControllers();
+app.Run();
+```
+
+```json
+// appsettings.json
+{
+  "Jwt": {
+    "Key": "YourSuperSecretKeyThatIsAtLeast32CharactersLong!",
+    "Issuer": "https://yourapi.com",
+    "Audience": "https://yourapi.com",
+    "ExpiryMinutes": 60
+  }
+}
+```
+
+```csharp
+// TokenService.cs
+public class TokenService
+{
+    private readonly IConfiguration _configuration;
+
+    public TokenService(IConfiguration configuration)
+    {
+        _configuration = configuration;
+    }
+
+    public string GenerateToken(string username, string[] roles)
+    {
+        var securityKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
+        var credentials = new SigningCredentials(
+            securityKey, 
+            SecurityAlgorithms.HmacSha256);
+
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.Name, username),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+        };
+
+        // Add roles as claims
+        foreach (var role in roles)
+        {
+            claims.Add(new Claim(ClaimTypes.Role, role));
+        }
+
+        var token = new JwtSecurityToken(
+            issuer: _configuration["Jwt:Issuer"],
+            audience: _configuration["Jwt:Audience"],
+            claims: claims,
+            expires: DateTime.Now.AddMinutes(
+                Convert.ToDouble(_configuration["Jwt:ExpiryMinutes"])),
+            signingCredentials: credentials
+        );
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+}
+```
+
+```csharp
+// AuthController.cs
+[ApiController]
+[Route("api/[controller]")]
+public class AuthController : ControllerBase
+{
+    private readonly TokenService _tokenService;
+
+    public AuthController(TokenService tokenService)
+    {
+        _tokenService = tokenService;
+    }
+
+    [HttpPost("login")]
+    public IActionResult Login([FromBody] LoginModel model)
+    {
+        // Validate credentials
+        if (!ValidateCredentials(model.Username, model.Password))
+        {
+            return Unauthorized("Invalid credentials");
+        }
+
+        // Get user roles from database
+        var roles = new[] { "Admin", "User" };
+
+        // Generate token
+        var token = _tokenService.GenerateToken(model.Username, roles);
+
+        return Ok(new { Token = token });
+    }
+}
+
+// Client usage: Add to request header
+// Authorization: Bearer <token>
+```
+
+### Authorization Techniques
+
+**1. Role-Based Authorization**
+```csharp
+// Simple role check
+[Authorize(Roles = "Admin")]
+[HttpGet("admin-only")]
+public IActionResult AdminOnly()
+{
+    return Ok("Admin access granted");
+}
+
+// Multiple roles (OR logic)
+[Authorize(Roles = "Admin,Manager")]
+[HttpGet("admin-or-manager")]
+public IActionResult AdminOrManager()
+{
+    return Ok("Access granted");
+}
+
+// Multiple role attributes (AND logic)
+[Authorize(Roles = "Admin")]
+[Authorize(Roles = "Manager")]
+[HttpGet("admin-and-manager")]
+public IActionResult AdminAndManager()
+{
+    return Ok("Access granted");
+}
+```
+
+**2. Claims-Based Authorization**
+```csharp
+// Program.cs - Configure claims-based policy
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("EmployeeOnly", policy =>
+        policy.RequireClaim("EmployeeNumber"));
+
+    options.AddPolicy("SeniorEmployee", policy =>
+        policy.RequireClaim("YearsOfService", "5", "10", "15"));
+});
+
+// Controller
+[Authorize(Policy = "EmployeeOnly")]
+[HttpGet("employee-data")]
+public IActionResult GetEmployeeData()
+{
+    return Ok("Employee data");
+}
+```
+
+**3. Policy-Based Authorization (Most Flexible)**
+```csharp
+// Custom requirement
+public class MinimumAgeRequirement : IAuthorizationRequirement
+{
+    public int MinimumAge { get; }
+
+    public MinimumAgeRequirement(int minimumAge)
+    {
+        MinimumAge = minimumAge;
+    }
+}
+
+// Custom handler
+public class MinimumAgeHandler : AuthorizationHandler<MinimumAgeRequirement>
+{
+    protected override Task HandleRequirementAsync(
+        AuthorizationHandlerContext context,
+        MinimumAgeRequirement requirement)
+    {
+        var dateOfBirthClaim = context.User.FindFirst(c => c.Type == "DateOfBirth");
+
+        if (dateOfBirthClaim == null)
+        {
+            return Task.CompletedTask;
+        }
+
+        var dateOfBirth = Convert.ToDateTime(dateOfBirthClaim.Value);
+        var age = DateTime.Today.Year - dateOfBirth.Year;
+
+        if (dateOfBirth > DateTime.Today.AddYears(-age))
+        {
+            age--;
+        }
+
+        if (age >= requirement.MinimumAge)
+        {
+            context.Succeed(requirement);
+        }
+
+        return Task.CompletedTask;
+    }
+}
+
+// Program.cs - Register policy and handler
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AtLeast21", policy =>
+        policy.Requirements.Add(new MinimumAgeRequirement(21)));
+});
+
+builder.Services.AddSingleton<IAuthorizationHandler, MinimumAgeHandler>();
+
+// Controller
+[Authorize(Policy = "AtLeast21")]
+[HttpGet("adult-content")]
+public IActionResult GetAdultContent()
+{
+    return Ok("Adult content");
+}
+```
+
+**4. Resource-Based Authorization**
+```csharp
+// Authorization handler for resource
+public class DocumentAuthorizationHandler :
+    AuthorizationHandler<SameAuthorRequirement, Document>
+{
+    protected override Task HandleRequirementAsync(
+        AuthorizationHandlerContext context,
+        SameAuthorRequirement requirement,
+        Document resource)
+    {
+        if (context.User.Identity?.Name == resource.Author)
+        {
+            context.Succeed(requirement);
+        }
+
+        return Task.CompletedTask;
+    }
+}
+
+public class SameAuthorRequirement : IAuthorizationRequirement { }
+
+// Controller - Check authorization imperatively
+[ApiController]
+[Route("api/[controller]")]
+public class DocumentsController : ControllerBase
+{
+    private readonly IAuthorizationService _authorizationService;
+
+    public DocumentsController(IAuthorizationService authorizationService)
+    {
+        _authorizationService = authorizationService;
+    }
+
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetDocument(int id)
+    {
+        var document = await GetDocumentFromDatabase(id);
+
+        var authorizationResult = await _authorizationService
+            .AuthorizeAsync(User, document, "SameAuthorPolicy");
+
+        if (!authorizationResult.Succeeded)
+        {
+            return Forbid();
+        }
+
+        return Ok(document);
+    }
+}
+```
+
+### Best Practices
+
+**Authentication:**
+- Use HTTPS always for authentication endpoints
+- Store passwords using strong hashing (bcrypt, Argon2, or PBKDF2)
+- Never store plain text passwords
+- Implement account lockout after failed login attempts
+- Use secure cookie settings: HttpOnly, Secure, SameSite
+- For JWT: Keep secrets in secure configuration (Azure Key Vault, AWS Secrets Manager)
+- Use short token expiration times with refresh tokens
+- Validate all JWT claims (issuer, audience, expiration)
+
+**Authorization:**
+- Follow principle of least privilege
+- Use policy-based authorization for complex scenarios
+- Combine authorization techniques when needed
+- Test authorization logic thoroughly
+- Log authorization failures for security monitoring
+- Use resource-based authorization for fine-grained control
+- Don't rely solely on client-side authorization checks
+
+**Common Authentication Flow:**
+1. User submits credentials
+2. Server validates credentials
+3. Server generates authentication token/cookie
+4. Client stores token/cookie
+5. Client includes token/cookie in subsequent requests
+6. Server validates token/cookie
+7. Server checks authorization for requested resource
+8. Server returns response or 401/403 status
 
 ## What is the difference between cookie-based authentication and JWT in .NET Core?
 
 ## How do you secure sensitive information in configuration files (e.g., appsettings.json)?
 
 ## What is the difference between framework-dependent and self-contained deployments?
+
+## What is garbage collection, and how does it work in .NET Core?
 
 # When to Use Task.Run in .NET
 
