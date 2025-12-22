@@ -104,9 +104,36 @@ Health checks are endpoints that provide information about the health status of 
 
 ### Types of health checks
 
-- Liveness: determines if the application is running and should continue to run. If it fails, the orchestrator should restart the application
-- Readiness: determines if the application is ready to accept requests. If it fails, the orchestrator should stop routing traffic to it until it recovers
-- Startup: used to determine if the application has completed its initialization. Useful for slow-starting applications
+**Liveness Probe**
+- **Purpose**: Determines if the application is running and should continue to run
+- **When it fails**: The orchestrator (like Kubernetes) should kill and restart the container/application
+- **What it checks**: Basic application responsiveness - "Is the app alive or deadlocked?"
+- **Example scenarios**: 
+  - Application has deadlocked and can't process requests
+  - Application has entered an unrecoverable state
+  - Memory leak has made the application unresponsive
+- **Best practice**: Keep checks simple and fast. Don't check dependencies - just verify the application itself is responsive
+
+**Readiness Probe**
+- **Purpose**: Determines if the application is ready to accept and process requests
+- **When it fails**: The orchestrator should stop routing traffic to the instance but keep it running. Traffic resumes once the check passes again
+- **What it checks**: Application and its critical dependencies - "Can the app handle requests right now?"
+- **Example scenarios**:
+  - Database connection is temporarily unavailable
+  - Required external API is down
+  - Application is warming up caches
+  - Application is under heavy load and needs to temporarily stop accepting new requests
+- **Best practice**: Check all critical dependencies needed to serve requests. The instance can recover without restart
+
+**Startup Probe**
+- **Purpose**: Determines if the application has completed its initialization and is ready to be tested by liveness/readiness probes
+- **When it fails**: After a configured timeout, the orchestrator will kill and restart the container
+- **What it checks**: Whether the application has finished starting up - "Has the app finished loading?"
+- **Example scenarios**:
+  - Large applications that need 30+ seconds to start
+  - Applications that load large datasets or models at startup
+  - Applications with complex initialization routines
+- **Best practice**: Use for slow-starting applications. While startup probe is running, liveness and readiness probes are disabled. Once it succeeds, liveness/readiness probes take over
 
 ### Implementation in .NET Core
 
