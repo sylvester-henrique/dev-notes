@@ -16,6 +16,7 @@
 - [What is response caching, and how do you implement it in .NET Core?](#what-is-response-caching-and-how-do-you-implement-it-in-net-core)
 - [What is garbage collection, and how does it work in .NET Core?](#what-is-garbage-collection-and-how-does-it-work-in-net-core)
 - [How do you implement authentication and authorization in .NET Core?](#how-do-you-implement-authentication-and-authorization-in-net-core)
+- [When to Use Task.Run in .NET](#when-to-use-taskrun-in-net)
 
 ## .NET Core and .NET Framework
 
@@ -120,3 +121,67 @@ TODO
 ## How do you secure sensitive information in configuration files (e.g., appsettings.json)?
 
 ## What is the difference between framework-dependent and self-contained deployments?
+
+# When to Use Task.Run in .NET
+
+`Task.Run` in .NET is used to offload work to a background thread from the thread pool.
+
+## When to use
+
+### 1. CPU-Bound Work in UI Applications
+```csharp
+// WPF, WinForms, MAUI, etc. 
+private async void Button_Click(object sender, EventArgs e)
+{
+    var result = await Task.Run(() => PerformHeavyCalculation());
+    labelResult.Text = result.ToString();
+}
+```
+This prevents blocking the UI thread and keeps your application responsive.
+
+### 2. CPU-Bound Work in ASP. NET Core (Rarely)
+```csharp
+// Only if you have genuinely CPU-intensive work
+public async Task<IActionResult> GenerateReport()
+{
+    var report = await Task.Run(() => GenerateComplexReport());
+    return Ok(report);
+}
+```
+**Caution**: This is controversial and often not recommended because it just moves the thread blocking from the request thread to a thread pool thread.  
+
+### 3. Making Synchronous Code Asynchronous
+```csharp
+// Legacy library with only sync methods
+public async Task<Data> GetDataAsync()
+{
+    return await Task.Run(() => legacyLibrary.GetDataSync());
+}
+```
+Useful when wrapping old synchronous APIs for use in async contexts.
+
+### 4. Parallel Processing
+```csharp
+var tasks = items.Select(item => Task.Run(() => ProcessItem(item)));
+await Task.WhenAll(tasks);
+```
+
+## When NOT to use
+
+### 1. I/O-Bound Operations
+```csharp
+// ❌ BAD - Wastes a thread
+await Task.Run(async () => await httpClient.GetAsync(url));
+
+// ✅ GOOD - Just await directly
+await httpClient.GetAsync(url);
+```
+
+### 2. Already Asynchronous Methods
+```csharp
+// ❌ BAD - Unnecessary wrapper
+await Task.Run(async () => await SomeAsyncMethod());
+
+// ✅ GOOD
+await SomeAsyncMethod();
+```
