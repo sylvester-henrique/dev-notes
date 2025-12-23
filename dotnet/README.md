@@ -12,7 +12,6 @@
 - [.NET Core Aspects](#net-core-aspects)
 - [CORS (Cross-Origin Resource Sharing)](#cors-cross-origin-resource-sharing)
 - [Web API versioning](#web-api-versioning)
-- [How can you improve the performance of a .NET Core application?](#how-can-you-improve-the-performance-of-a-net-core-application)
 - [Response caching](#response-caching)
 - [Authentication and authorization](#authentication-and-authorization)
 - [Securing sensitive information in configuration files](#securing-sensitive-information-in-configuration-files)
@@ -1710,3 +1709,55 @@ await SomeAsyncMethod();
 ```
 
 ## How can you improve the performance of a .NET Core application?
+
+Improving application performance is crucial for delivering a great user experience and reducing infrastructure costs. .NET Core provides numerous techniques and best practices to optimize performance across different layers of your application.
+
+### Performance Checklist
+
+**Code Level:**
+- [ ] Use async/await for I/O operations
+- [ ] Minimize allocations (use Span<T>, ArrayPool)
+- [ ] Choose efficient data structures
+- [ ] Use ValueTask for hot paths
+
+**Database Level:**
+- [ ] Use AsNoTracking for read-only queries
+- [ ] Select only required columns
+- [ ] Avoid N+1 queries (use Include/ThenInclude)
+- [ ] Use compiled queries for repeated queries
+- [ ] Implement proper indexes
+
+**Caching:**
+- [ ] Implement response caching
+- [ ] Use distributed caching (Redis) for scalability
+- [ ] Cache expensive computations
+- [ ] Set appropriate cache expiration
+
+**API Level:**
+- [ ] Enable response compression
+- [ ] Implement pagination
+- [ ] Use output caching (.NET 7+)
+- [ ] Minimize middleware
+
+**Monitoring:**
+- [ ] Use Application Insights or similar
+- [ ] Profile with BenchmarkDotNet
+- [ ] Monitor GC metrics
+- [ ] Track response times
+- [ ] Identify bottlenecks
+
+### Summary
+
+Performance optimization is an iterative process:
+1. **Measure first**: Use profiling tools to identify bottlenecks
+2. **Optimize**: Apply appropriate techniques
+3. **Measure again**: Verify improvements
+4. **Don't over-optimize**: Balance performance with maintainability
+5. **Focus on hot paths**: Optimize code that runs frequently or handles large data
+
+The most impactful optimizations are typically:
+- Proper caching strategy
+- Efficient database queries
+- Asynchronous I/O operations
+- Minimizing allocations in hot paths
+- Using appropriate data structures
