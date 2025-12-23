@@ -14,8 +14,10 @@
 - [Web API versioning](#web-api-versioning)
 - [How can you improve the performance of a .NET Core application?](#how-can-you-improve-the-performance-of-a-net-core-application)
 - [Response caching](#response-caching)
-- [What is garbage collection, and how does it work in .NET Core?](#what-is-garbage-collection-and-how-does-it-work-in-net-core)
 - [Authentication and authorization](#authentication-and-authorization)
+- [Securing sensitive information in configuration files](#securing-sensitive-information-in-configuration-files)
+- [Framework-dependent and self-contained deployments](#framework-dependent-and-self-contained-deployments)
+- [What is garbage collection, and how does it work in .NET Core?](#what-is-garbage-collection-and-how-does-it-work-in-net-core)
 - [When to Use Task.Run in .NET](#when-to-use-taskrun-in-net)
 
 ## .NET Core and .NET Framework
@@ -787,7 +789,7 @@ public class ProductsController : ControllerBase
 }
 ```
 
-## Authentication and authorization?
+## Authentication and authorization
 
 Authentication and authorization are critical security mechanisms in .NET Core applications. Authentication verifies who the user is, while authorization determines what the user can do.
 
@@ -1349,7 +1351,7 @@ SIGNATURE
 - When scaling horizontally across multiple servers
 - When you don't want server-side session management
 
-## How do you secure sensitive information in configuration files (e.g., appsettings.json)?
+## Securing sensitive information in configuration files
 
 Storing sensitive information like connection strings, API keys, passwords, and certificates directly in configuration files poses a significant security risk. .NET Core provides several secure approaches to manage sensitive data.
 
@@ -1530,7 +1532,96 @@ HashiCorp Vault is designed to securely store and tightly control access to toke
 5. Command-line arguments
 6. Azure Key Vault / Cloud providers
 
-## What is the difference between framework-dependent and self-contained deployments?
+## Framework-dependent and self-contained deployments
+
+When deploying a .NET Core application, you must choose between two deployment models: **framework-dependent** and **self-contained**. This choice affects how your application is packaged, deployed, and run on target machines.
+
+### Framework-Dependent Deployment (FDD)
+
+Framework-dependent deployment relies on the .NET runtime being pre-installed on the target system. The deployment package contains only your application code and third-party dependencies, not the .NET runtime itself.
+
+**How It Works:**
+1. Package contains only application DLLs and dependencies
+2. Target machine must have compatible .NET runtime installed
+3. Application launched using `dotnet myapp.dll` command
+4. Runtime is shared across all .NET applications on the system
+
+**Characteristics:**
+
+| Aspect | Details |
+|--------|---------|
+| **Size** | Small (~100 KB for simple apps) |
+| **Runtime** | Must be pre-installed on target |
+| **Updates** | Runtime updates apply automatically |
+| **Compatibility** | Works on any OS with .NET runtime |
+| **Launch** | Requires `dotnet` CLI |
+
+**Advantages:**
+- ✅ **Small deployment size**: Only application binaries, no runtime
+- ✅ **Easy updates**: Runtime updates apply to all apps automatically
+- ✅ **Shared runtime**: Multiple apps share the same runtime installation
+- ✅ **Security patches**: Runtime vulnerabilities fixed by updating once
+- ✅ **Faster deployment**: Less data to transfer
+- ✅ **Lower storage requirements**: Multiple apps don't duplicate runtime
+
+**Disadvantages:**
+- ⚠️ **Runtime dependency**: Target machine must have .NET runtime installed
+- ⚠️ **Version conflicts**: Apps may require different runtime versions
+- ⚠️ **No control**: Can't guarantee exact runtime version
+- ⚠️ **Deployment complexity**: Must ensure runtime is installed first
+- ⚠️ **Breaking changes**: Runtime updates might break compatibility
+
+**Use Cases:**
+- Internal enterprise applications where runtime is managed centrally
+- Microservices in containerized environments with base runtime images
+- Development and testing environments
+- Applications deployed to known environments (you control the infrastructure)
+- When minimizing deployment size is critical
+
+### Self-Contained Deployment (SCD)
+
+Self-contained deployment packages the entire .NET runtime with your application. The deployment is a complete, standalone package that doesn't require any pre-installed runtime.
+
+**How It Works:**
+1. Package contains application, dependencies, AND .NET runtime
+2. No runtime installation needed on target machine
+3. Application runs as a native executable
+4. Each application has its own isolated runtime
+
+**Characteristics:**
+
+| Aspect | Details |
+|--------|---------|
+| **Size** | Large (~70-100 MB for simple apps) |
+| **Runtime** | Included in deployment |
+| **Updates** | Must redeploy app for runtime updates |
+| **Compatibility** | Platform-specific (must specify RID) |
+| **Launch** | Direct executable (myapp.exe) |
+
+**Advantages:**
+- ✅ **No runtime dependency**: Works on machines without .NET installed
+- ✅ **Version control**: Exact runtime version bundled with app
+- ✅ **Isolation**: Each app has its own runtime (no conflicts)
+- ✅ **Simple deployment**: Single package, no prerequisites
+- ✅ **Predictable behavior**: Runtime can't change unexpectedly
+- ✅ **Native executable**: Can run directly without `dotnet` command
+
+**Disadvantages:**
+- ⚠️ **Large deployment size**: 70-100+ MB even for simple apps
+- ⚠️ **Platform-specific**: Must build separate packages for each OS
+- ⚠️ **Update burden**: Must redeploy app for runtime security patches
+- ⚠️ **Storage overhead**: Each app duplicates the runtime
+- ⚠️ **Slower deployment**: More data to transfer
+- ⚠️ **Maintenance**: More packages to manage and update
+
+**Use Cases:**
+- Distributing to end users (desktop applications)
+- Environments where you can't install runtime (restricted systems)
+- Applications with specific runtime version requirements
+- Containers where you want minimal base images
+- Offline or air-gapped environments
+- When you need native executables
+- Maximum portability and independence
 
 ## What is garbage collection, and how does it work in .NET Core?
 
