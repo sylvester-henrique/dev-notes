@@ -17,7 +17,7 @@
 - [Authentication and authorization](#authentication-and-authorization)
 - [Securing sensitive information in configuration files](#securing-sensitive-information-in-configuration-files)
 - [Framework-dependent and self-contained deployments](#framework-dependent-and-self-contained-deployments)
-- [What is garbage collection, and how does it work in .NET Core?](#what-is-garbage-collection-and-how-does-it-work-in-net-core)
+- [Garbage collection](#garbage-collection)
 - [When to Use Task.Run in .NET](#when-to-use-taskrun-in-net)
 
 ## .NET Core and .NET Framework
@@ -1623,7 +1623,27 @@ Self-contained deployment packages the entire .NET runtime with your application
 - When you need native executables
 - Maximum portability and independence
 
-## What is garbage collection, and how does it work in .NET Core?
+## Garbage collection
+
+Garbage Collection (GC) is an automatic memory management feature in .NET Core that reclaims memory occupied by objects that are no longer in use by the application. It eliminates the need for manual memory management and prevents common memory-related bugs.
+
+### What is Garbage Collection?
+
+**Purpose**: Automatically manages the allocation and release of memory for your application.
+
+**Key Responsibilities:**
+1. Allocates memory for new objects
+2. Determines which objects are no longer being used
+3. Reclaims memory from unreachable objects
+4. Compacts memory to reduce fragmentation
+5. Manages the heap to optimize performance
+
+**Benefits:**
+- ✅ Prevents memory leaks
+- ✅ Eliminates dangling pointers
+- ✅ Prevents double-free errors
+- ✅ Automatic memory management
+- ✅ Improves developer productivity
 
 # When to Use Task.Run in .NET
 
