@@ -1351,6 +1351,185 @@ SIGNATURE
 
 ## How do you secure sensitive information in configuration files (e.g., appsettings.json)?
 
+Storing sensitive information like connection strings, API keys, passwords, and certificates directly in configuration files poses a significant security risk. .NET Core provides several secure approaches to manage sensitive data.
+
+### The Problem with appsettings.json
+
+**Never commit sensitive data to source control:**
+```json
+// ❌ BAD - Sensitive data in appsettings.json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=myserver;Database=mydb;User Id=admin;Password=P@ssw0rd123;"
+  },
+  "ApiKeys": {
+    "OpenAI": "sk-abc123xyz789",
+    "Stripe": "sk_live_51ABC123"
+  },
+  "JwtSecret": "MySecretKey12345"
+}
+```
+
+**Problems:**
+- Visible in source control history (even if deleted later)
+- Accessible to anyone with repository access
+- Difficult to change without code deployment
+- Same credentials used across all environments
+- Violates security best practices and compliance requirements
+
+### Solution 1: User Secrets (Development Only)
+
+User Secrets store sensitive data outside the project directory, preventing accidental commits to source control.
+
+**Important Notes:**
+- ⚠️ **Development only** - User Secrets are NOT encrypted and should never be used in production
+- ⚠️ Not suitable for team sharing - each developer manages their own secrets
+- ✅ Prevents accidental commits to source control
+- ✅ Works seamlessly with IConfiguration
+
+### Solution 2: Environment Variables
+
+Environment variables are accessible to the application at runtime and can be set per environment.
+
+**Advantages:**
+- ✅ Separate from code and configuration files
+- ✅ Different values per environment
+- ✅ Supported by all hosting platforms
+- ✅ No code changes needed
+
+**Disadvantages:**
+- ⚠️ Not encrypted by default
+- ⚠️ Visible in process listings
+- ⚠️ Difficult to manage at scale
+
+### Solution 3: Azure Key Vault (Recommended for Production)
+
+Azure Key Vault is a cloud service for securely storing and accessing secrets, keys, and certificates.
+
+**Advantages:**
+- ✅ Encrypted at rest and in transit
+- ✅ Centralized secret management
+- ✅ Access control and auditing
+- ✅ Automatic rotation support
+- ✅ Integrated with Azure services
+- ✅ Compliance with security standards
+
+**Disadvantages:**
+- ⚠️ Azure-specific (vendor lock-in)
+- ⚠️ Additional cost
+- ⚠️ Requires network connectivity
+
+### Solution 4: HashiCorp Vault
+
+HashiCorp Vault is an open-source, enterprise-grade secrets management tool that provides a unified interface to store, access, and distribute secrets across any infrastructure.
+
+**What is HashiCorp Vault?**
+
+HashiCorp Vault is designed to securely store and tightly control access to tokens, passwords, certificates, API keys, and other secrets in modern computing. It handles leasing, key revocation, key rolling, and auditing. Through a unified API, users can access an encrypted Key/Value store and network encryption-as-a-service, or generate AWS IAM/STS credentials, SQL/NoSQL databases, X.509 certificates, SSH credentials, and more.
+
+**Key Features:**
+
+1. **Platform-Agnostic**: Works with any cloud provider, on-premises, or hybrid infrastructure
+2. **Secure Secret Storage**: Encrypts data at rest using 256-bit AES with GCM
+3. **Dynamic Secrets**: Generates secrets on-demand for supported systems (databases, AWS, SSH, etc.)
+4. **Data Encryption**: Provides encryption as a service without storing data
+5. **Leasing and Renewal**: All secrets have a lease associated with them
+6. **Revocation**: Built-in support for secret revocation
+7. **Audit Logging**: Detailed audit logs of all access to secrets
+8. **Multiple Authentication Methods**: Token, LDAP, GitHub, AWS, Azure, Kubernetes, and more
+9. **Access Control Policies**: Fine-grained access control using policies
+10. **High Availability**: Supports clustering for high availability
+
+**Architecture:**
+
+```
+┌─────────────────────────────────────────┐
+│         Application/Client              │
+└───────────────┬─────────────────────────┘
+                │ HTTPS/API
+                ▼
+┌─────────────────────────────────────────┐
+│         HashiCorp Vault Server          │
+│  ┌───────────────────────────────────┐  │
+│  │      Authentication Methods       │  │
+│  │  (Token, LDAP, AWS, Azure, etc.)  │  │
+│  └───────────────────────────────────┘  │
+│  ┌───────────────────────────────────┐  │
+│  │        Secrets Engines            │  │
+│  │  (KV, Database, AWS, PKI, etc.)   │  │
+│  └───────────────────────────────────┘  │
+│  ┌───────────────────────────────────┐  │
+│  │       Encryption (Barrier)        │  │
+│  └───────────────────────────────────┘  │
+└─────────────┬───────────────────────────┘
+              │ Encrypted Storage
+              ▼
+┌─────────────────────────────────────────┐
+│    Storage Backend (File, Consul, etc.) │
+└─────────────────────────────────────────┘
+```
+
+**Advantages of HashiCorp Vault:**
+
+- ✅ **Platform-agnostic**: Works with any infrastructure (AWS, Azure, GCP, on-premises)
+- ✅ **Open source**: Free to use with enterprise version available
+- ✅ **Dynamic secrets**: Generates credentials on-demand, reducing exposure
+- ✅ **Automatic rotation**: Secrets can be automatically rotated
+- ✅ **Comprehensive audit logs**: Every secret access is logged
+- ✅ **Multiple authentication methods**: Flexible authentication options
+- ✅ **Encryption as a service**: Can encrypt/decrypt data without storing it
+- ✅ **Policy-based access control**: Fine-grained control over who can access what
+- ✅ **High availability**: Clustering support for production environments
+- ✅ **Extensive integrations**: Works with databases, cloud providers, SSH, PKI, etc.
+
+**Disadvantages:**
+
+- ⚠️ **Complexity**: Requires infrastructure setup and maintenance
+- ⚠️ **Learning curve**: More complex than simple environment variables
+- ⚠️ **Operational overhead**: Need to manage Vault servers, unsealing, backups
+- ⚠️ **Network dependency**: Application must be able to reach Vault server
+- ⚠️ **Cost**: Enterprise features require paid license
+
+**When to Use HashiCorp Vault:**
+
+- Multi-cloud or hybrid infrastructure
+- Need platform-agnostic secret management
+- Require dynamic secret generation
+- Want fine-grained access control and auditing
+- Need to manage secrets across many applications
+- Want to avoid vendor lock-in
+- Have compliance requirements for secret management
+- Need encryption as a service
+- Building microservices that need to share secrets
+
+### Best Practices Summary
+
+**Development:**
+1. ✅ Use User Secrets for local development
+2. ✅ Use `.gitignore` to exclude `appsettings.Development.json` if it contains secrets
+3. ✅ Document required secrets in README without exposing actual values
+4. ✅ Use placeholder values in committed config files
+
+**Production:**
+1. ✅ Use Azure Key Vault, AWS Secrets Manager, or HashiCorp Vault
+2. ✅ Implement Managed Identity / IAM roles (no hard-coded credentials)
+3. ✅ Rotate secrets regularly
+4. ✅ Use separate secrets for each environment (dev, staging, production)
+5. ✅ Enable auditing and monitoring
+6. ✅ Implement least privilege access
+7. ✅ Never log sensitive values
+8. ✅ Use encrypted connections (HTTPS, SSL)
+
+### Configuration Priority Order
+
+.NET Core loads configuration in this order (later sources override earlier ones):
+1. appsettings.json
+2. appsettings.{Environment}.json
+3. User Secrets (Development only)
+4. Environment Variables
+5. Command-line arguments
+6. Azure Key Vault / Cloud providers
+
 ## What is the difference between framework-dependent and self-contained deployments?
 
 ## What is garbage collection, and how does it work in .NET Core?
