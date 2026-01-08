@@ -451,6 +451,219 @@ string first = names[0];
    - Maximum performance is required
    - Working with multi-dimensional data
 
+### Hash-Based Collections
+
+.NET provides several hash-based collections for fast lookups using key-value pairs or unique values. These collections use hash tables internally to achieve O(1) average-time complexity for lookups.
+
+#### Dictionary<TKey, TValue>
+
+The generic, type-safe dictionary for storing key-value pairs. This is the most commonly used hash-based collection.
+
+**Key Characteristics:**
+- **Generic** - type-safe at compile time
+- **Fast lookups** - O(1) average time for add, remove, and lookup
+- **Unique keys** - each key can appear only once
+- **Unordered** - does not maintain insertion order
+- **Not thread-safe** - use `ConcurrentDictionary` for concurrent access
+- Namespace: `System.Collections.Generic`
+
+**When to Use:**
+- When you need fast lookups by key
+- When you need to associate values with unique keys
+- For caching, indexes, or lookup tables
+- When order doesn't matter
+
+**Common Operations:**
+```csharp
+// Create and initialize
+Dictionary<string, int> ages = new Dictionary<string, int>();
+var scores = new Dictionary<string, int>
+{
+    { "Alice", 95 },
+    { "Bob", 87 }
+};
+
+// Add items
+ages.Add("Alice", 30);
+ages["Bob"] = 25; // Also adds if key doesn't exist
+
+// Access items
+int age = ages["Alice"];
+
+// Safe access
+if (ages.TryGetValue("Charlie", out int charlieAge))
+{
+    Console.WriteLine(charlieAge);
+}
+
+// Check if key exists
+bool exists = ages.ContainsKey("Alice");
+
+// Remove items
+ages.Remove("Bob");
+
+// Iterate
+foreach (var kvp in ages)
+{
+    Console.WriteLine($"{kvp.Key}: {kvp.Value}");
+}
+
+// Get all keys or values
+var allKeys = ages.Keys;
+var allValues = ages.Values;
+```
+
+**Best Practices:**
+```csharp
+// ✅ Use TryGetValue to avoid exceptions
+if (dict.TryGetValue(key, out var value))
+{
+    // Use value safely
+}
+
+// ❌ Avoid - throws KeyNotFoundException if key doesn't exist
+var value = dict[key];
+
+// ✅ Use ContainsKey before accessing unknown keys
+if (dict.ContainsKey(key))
+{
+    var value = dict[key];
+}
+```
+
+#### HashSet<T>
+
+A collection of unique values with fast lookups. Think of it as a Dictionary with only keys, no values.
+
+**Key Characteristics:**
+- **Generic** - type-safe
+- **Unique elements** - automatically prevents duplicates
+- **Fast operations** - O(1) average time for add, remove, contains
+- **Unordered** - no guaranteed order
+- **Set operations** - supports union, intersection, difference
+- Namespace: `System.Collections.Generic`
+
+**When to Use:**
+- When you need a collection of unique items
+- When you frequently check for existence (Contains)
+- For mathematical set operations
+- To remove duplicates from a collection
+
+**Common Operations:**
+```csharp
+// Create
+HashSet<string> names = new HashSet<string>();
+var numbers = new HashSet<int> { 1, 2, 3, 4, 5 };
+
+// Add items - returns false if already exists
+bool added = names.Add("Alice"); // true
+added = names.Add("Alice"); // false, already exists
+
+// Check existence - very fast O(1)
+bool exists = names.Contains("Alice");
+
+// Remove
+names.Remove("Alice");
+
+// Set operations
+var set1 = new HashSet<int> { 1, 2, 3 };
+var set2 = new HashSet<int> { 3, 4, 5 };
+
+set1.UnionWith(set2);        // { 1, 2, 3, 4, 5 }
+set1.IntersectWith(set2);    // { 3 }
+set1.ExceptWith(set2);       // { 1, 2 }
+set1.SymmetricExceptWith(set2); // { 1, 2, 4, 5 }
+
+// Remove duplicates from list
+var listWithDuplicates = new List<int> { 1, 2, 2, 3, 3, 3 };
+var uniqueItems = new HashSet<int>(listWithDuplicates); // { 1, 2, 3 }
+```
+
+**Practical Example - Remove Duplicates:**
+```csharp
+public List<string> GetUniqueNames(List<string> names)
+{
+    var uniqueNames = new HashSet<string>(names);
+    return uniqueNames.ToList();
+}
+```
+
+#### ConcurrentDictionary<TKey, TValue>
+
+A thread-safe dictionary for concurrent access from multiple threads.
+
+**Key Characteristics:**
+- **Thread-safe** - safe for concurrent reads and writes
+- **Lock-free reads** - very fast for read operations
+- **Atomic operations** - methods like `AddOrUpdate`, `GetOrAdd`
+- **Performance overhead** - slightly slower than regular Dictionary
+- Namespace: `System.Collections.Concurrent`
+
+**When to Use:**
+- When multiple threads need to access the same dictionary
+- In caching scenarios with concurrent access
+- When you need atomic add-or-update operations
+
+**Common Operations:**
+```csharp
+var cache = new ConcurrentDictionary<string, int>();
+
+// Thread-safe add
+cache.TryAdd("key1", 100);
+
+// Get or add atomically
+int value = cache.GetOrAdd("key2", 200);
+
+// Add or update atomically
+cache.AddOrUpdate("key1", 
+    addValue: 100,                    // Value if key doesn't exist
+    updateValueFactory: (key, old) => old + 1); // Update if exists
+
+// Try to update
+cache.TryUpdate("key1", newValue: 200, comparisonValue: 100);
+
+// Safe removal
+if (cache.TryRemove("key1", out int removed))
+{
+    Console.WriteLine($"Removed: {removed}");
+}
+```
+
+**Practical Example - Thread-Safe Cache:**
+```csharp
+public class UserCache
+{
+    private readonly ConcurrentDictionary<int, User> _cache = new();
+
+    public User GetOrLoadUser(int userId)
+    {
+        return _cache.GetOrAdd(userId, id =>
+        {
+            // This is only called if user not in cache
+            return LoadUserFromDatabase(id);
+        });
+    }
+}
+```
+
+### When to Use Hash Collections
+
+**Use Dictionary<TKey, TValue> when:**
+- You need to associate values with unique keys
+- Fast lookup by key is required
+- Single-threaded or read-only concurrent access
+
+**Use HashSet<T> when:**
+- You need a collection of unique items
+- Order doesn't matter
+- You frequently check for item existence
+- You need set operations (union, intersection)
+
+**Use ConcurrentDictionary<TKey, TValue> when:**
+- Multiple threads need to read/write simultaneously
+- You need thread-safe caching
+- You need atomic operations like GetOrAdd
+
 ## IQuerable vs IEnumerable
 
 `IEnumerable<T>` and `IQueryable<T>` are both used for querying collections in .NET, but they work very differently and are suited for different scenarios.
