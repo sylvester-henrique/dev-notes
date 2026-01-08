@@ -8,6 +8,7 @@
 - [Dependency Injection (DI)](#dependency-injection-di)
 - [Kestrel web server](#kestrel-web-server)
 - [Health check](#health-check)
+- [Value Types vs Reference Types](#value-types-vs-reference-types)
 - [.NET Collections and Data Structures](#net-collections-and-data-structures)
 - [IQuerable vs IEnumerable](#iquerable-vs-ienumerable)
 - [.NET Core Aspects](#net-core-aspects)
@@ -231,6 +232,176 @@ public class CustomHealthCheck : IHealthCheck
     }
 }
 ```
+
+## Value Types vs Reference Types
+
+Understanding the difference between value types and reference types is fundamental to .NET programming. It affects how data is stored, passed, copied, and how memory is managed.
+
+### Key Differences
+
+| Feature | Value Types | Reference Types |
+|---------|-------------|----------------|
+| **Storage** | Stack (usually) | Heap |
+| **Contains** | Actual data | Reference (pointer) to data |
+| **Assignment** | Copies the value | Copies the reference |
+| **Default Value** | 0, false, or default struct values | `null` |
+| **Null Support** | No (unless Nullable<T>) | Yes |
+| **Inheritance** | Cannot inherit | Can inherit |
+| **Performance** | Faster allocation/deallocation | Slower, requires GC |
+| **Examples** | int, bool, struct, enum | class, string, array, delegate |
+
+### Value Types
+
+Value types store their data directly in the variable. When you assign a value type to another variable, the entire value is copied.
+
+**Built-in Value Types:**
+- **Numeric**: `int`, `long`, `short`, `byte`, `float`, `double`, `decimal`
+- **Boolean**: `bool`
+- **Character**: `char`
+- **Structures**: `DateTime`, `TimeSpan`, `Guid`
+- **Enumerations**: `enum`
+- **User-defined**: `struct`
+
+### Reference Types
+
+Reference types store a reference (pointer) to the actual data, which resides on the heap. When you assign a reference type, you copy the reference, not the data.
+
+**Built-in Reference Types:**
+- **Classes**: `object`, `string`, `Array`
+- **Delegates**: `Func<T>`, `Action<T>`
+- **Interfaces**: Any interface type
+- **Records**: `record` (reference type by default)
+- **User-defined**: `class`
+
+### Boxing and Unboxing
+
+**Boxing**: Converting a value type to a reference type (object).
+
+```csharp
+int number = 42; // Value type on stack
+object boxed = number; // Boxing: copied to heap as object
+
+Console.WriteLine(boxed); // 42
+```
+
+**Unboxing**: Converting a reference type back to a value type.
+
+```csharp
+object boxed = 42;
+int number = (int)boxed; // Unboxing: copied back to stack
+
+Console.WriteLine(number); // 42
+```
+
+**Performance Impact:**
+```csharp
+// ❌ BAD - Boxing in a loop
+for (int i = 0; i < 1000000; i++)
+{
+    object boxed = i; // Boxing each iteration!
+    ProcessObject(boxed);
+}
+
+// ✅ GOOD - Use generics to avoid boxing
+for (int i = 0; i < 1000000; i++)
+{
+    ProcessValue(i); // No boxing with generic method
+}
+
+void ProcessValue<T>(T value) where T : struct
+{
+    // Works with value type directly
+}
+```
+
+**Common Boxing Scenarios:**
+```csharp
+// Boxing happens here:
+int number = 42;
+Console.WriteLine(number); // number is boxed to object
+
+ArrayList list = new ArrayList();
+list.Add(10); // 10 is boxed to object
+
+// Avoid boxing with generics:
+List<int> genericList = new List<int>();
+genericList.Add(10); // No boxing!
+```
+
+### Memory Allocation and Performance
+
+#### Stack vs Heap
+
+**Stack:**
+- Fast allocation/deallocation (just move stack pointer)
+- Automatic cleanup (no GC needed)
+- Limited size (~1MB per thread)
+- LIFO (Last In, First Out)
+- Thread-specific
+
+**Heap:**
+- Slower allocation (find free space)
+- Requires garbage collection
+- Large size (limited by available memory)
+- Shared across threads
+- Can cause fragmentation
+
+### Records: Value Semantics for Reference Types
+
+Records (C# 9.0+) are reference types with built-in value equality.
+
+```csharp
+public record Person(string Name, int Age);
+
+var person1 = new Person("Alice", 30);
+var person2 = new Person("Alice", 30);
+var person3 = person1;
+
+// Value equality (automatic)
+Console.WriteLine(person1 == person2); // True!
+Console.WriteLine(person1 == person3); // True
+
+// Still reference types
+Console.WriteLine(ReferenceEquals(person1, person2)); // False
+Console.WriteLine(ReferenceEquals(person1, person3)); // True
+
+// Immutable with "with" expression
+var person4 = person1 with { Age = 31 };
+Console.WriteLine(person4); // Person { Name = Alice, Age = 31 }
+```
+
+**Record Struct (C# 10.0+):**
+```csharp
+public record struct Point(int X, int Y);
+
+var p1 = new Point(10, 20);
+var p2 = new Point(10, 20);
+Console.WriteLine(p1 == p2); // True (value equality)
+```
+
+### When to Use Value Types vs Reference Types
+
+**Use Value Types (struct) when:**
+- ✅ Representing a single value or small set of values
+- ✅ Object size is small (< 16 bytes recommended)
+- ✅ Logically represents a single value (Point, Color, Money)
+- ✅ Immutability is natural
+- ✅ Short-lived data
+- ✅ Value equality makes sense
+- ✅ High-performance scenarios with many instances
+
+**Examples:** `Point`, `DateTime`, `TimeSpan`, `Guid`, `Complex`, `Vector3`
+
+**Use Reference Types (class) when:**
+- ✅ Representing complex entities
+- ✅ Object size is large (> 16 bytes)
+- ✅ Need inheritance
+- ✅ Need reference equality
+- ✅ Long-lived data
+- ✅ Mutable state is acceptable
+- ✅ Need polymorphism
+
+**Examples:** `Customer`, `Order`, `HttpClient`, `DbContext`, `StringBuilder`
 
 ## .NET Collections and Data Structures
 
