@@ -19,6 +19,7 @@
 - [Framework-dependent and self-contained deployments](#framework-dependent-and-self-contained-deployments)
 - [Garbage collection](#garbage-collection)
 - [Resource Management (using, IDisposable)](#resource-management-using-idisposable)
+- [Task vs Thread](#task-vs-thread)
 - [When to Use Task.Run in .NET](#when-to-use-taskrun-in-net)
 
 ## .NET Core and .NET Framework
@@ -2459,6 +2460,68 @@ public class MyService
     }
 }
 ```
+
+## Task vs Thread
+
+`Task` and `Thread` are both used for concurrent and parallel execution in .NET, but they operate at different abstraction levels and serve different purposes. Understanding their differences is crucial for writing efficient concurrent code.
+
+### Key Differences
+
+| Feature | Thread | Task |
+|---------|--------|------|
+| **Abstraction Level** | Low-level | High-level |
+| **Creation Cost** | Expensive (~1MB stack) | Lightweight |
+| **Thread Pool** | Can be pooled manually | Uses thread pool automatically |
+| **Return Values** | No direct support | Built-in with `Task<T>` |
+| **Cancellation** | Manual implementation | Built-in with `CancellationToken` |
+| **Exception Handling** | Complex | Integrated with try-catch |
+| **Composition** | Difficult | Easy with async/await |
+| **Best For** | Low-level threading | Asynchronous operations |
+| **Introduced** | .NET 1.0 | .NET 4.0 |
+| **Namespace** | System.Threading | System.Threading.Tasks |
+
+### What is a Thread?
+
+A **Thread** is the fundamental unit of execution in a process. It represents an actual OS-level thread with its own stack and execution context.
+
+**Characteristics:**
+- **Heavy**: Each thread allocates ~1MB of stack memory by default
+- **OS-managed**: Directly maps to operating system threads
+- **Manual control**: You control start, join, priority, and lifecycle
+- **Synchronous**: No built-in async/await support
+- **Limited**: Creating too many threads causes context-switching overhead
+
+### What is a Task?
+
+A **Task** is a higher-level abstraction representing an asynchronous operation. It doesn't necessarily correspond to a single thread and leverages the thread pool for efficiency.
+
+**Characteristics:**
+- **Lightweight**: No dedicated thread allocation, uses thread pool
+- **Efficient**: Thread pool reuses threads, minimizing overhead
+- **Composable**: Easy to chain with `async`/`await`, `ContinueWith`, etc.
+- **Return values**: `Task<T>` provides typed return values
+- **Exception handling**: Exceptions are captured and propagated cleanly
+- **Cancellation**: Built-in support with `CancellationToken`
+
+### Summary
+
+**Use Task when:**
+- ✅ You need asynchronous operations
+- ✅ You want built-in exception handling
+- ✅ You need return values
+- ✅ You want composable async code
+- ✅ You're doing I/O-bound work
+- ✅ You want efficient resource usage
+- ✅ **This is 99% of scenarios**
+
+**Use Thread when:**
+- ⚠️ You need long-running background work
+- ⚠️ You need specific thread priority
+- ⚠️ You need thread-local storage
+- ⚠️ You need specific apartment state (COM)
+- ⚠️ **These are rare, specific scenarios**
+
+**Key Principle:** In modern .NET development, **always prefer Task over Thread** unless you have a very specific reason to use threads directly. Tasks provide better performance, cleaner code, and are the foundation of async/await programming.
 
 # When to Use Task.Run in .NET
 
