@@ -8,6 +8,7 @@
 - [Dependency Injection (DI)](#dependency-injection-di)
 - [Kestrel web server](#kestrel-web-server)
 - [Health check](#health-check)
+- [.NET Collections and Data Structures](#net-collections-and-data-structures)
 - [IQuerable vs IEnumerable](#iquerable-vs-ienumerable)
 - [.NET Core Aspects](#net-core-aspects)
 - [CORS (Cross-Origin Resource Sharing)](#cors-cross-origin-resource-sharing)
@@ -227,6 +228,228 @@ public class CustomHealthCheck : IHealthCheck
     }
 }
 ```
+
+## .NET Collections and Data Structures
+
+.NET provides a rich hierarchy of collections and data structures, each with specific capabilities and use cases. Understanding the differences between interfaces like `IEnumerable`, `ICollection`, `IList`, and concrete types like `Array` and `List<T>` is crucial for writing efficient code.
+
+### Collection Interfaces Hierarchy
+
+```
+IEnumerable<T>
+    ↓
+ICollection<T>
+    ↓
+IList<T>
+```
+
+### IEnumerable<T>
+
+The base interface for all collections. It represents a sequence that can be iterated.
+
+**Key Characteristics:**
+- Provides **forward-only** iteration using `foreach`
+- **Read-only** - no methods to add, remove, or modify elements
+- Minimum functionality: only `GetEnumerator()` method
+- Used for deferred execution in LINQ queries
+- Namespace: `System.Collections.Generic`
+
+**When to Use:**
+- When you only need to iterate through a collection
+- For method parameters when you don't need to modify the collection
+- When working with LINQ queries (deferred execution)
+- When you want maximum flexibility - accepts any collection type
+
+**Example:**
+```csharp
+public void ProcessItems(IEnumerable<string> items)
+{
+    foreach (var item in items)
+    {
+        Console.WriteLine(item);
+    }
+}
+
+// Can accept any collection type
+ProcessItems(new List<string> { "a", "b", "c" });
+ProcessItems(new string[] { "x", "y", "z" });
+ProcessItems(new HashSet<string> { "1", "2" });
+```
+
+**Common Methods (from LINQ):**
+- `Where()`, `Select()`, `OrderBy()`, `FirstOrDefault()`, `Count()`, `Any()`, `All()`
+
+### ICollection<T>
+
+Extends `IEnumerable<T>` and adds basic collection operations.
+
+**Key Characteristics:**
+- Provides **count** of elements via `Count` property
+- Supports **add** and **remove** operations
+- Can check if collection is read-only
+- Can clear all elements
+- Namespace: `System.Collections.Generic`
+
+**Properties and Methods:**
+- `Count` - Gets the number of elements
+- `Add(T item)` - Adds an element
+- `Remove(T item)` - Removes an element
+- `Clear()` - Removes all elements
+- `Contains(T item)` - Checks if element exists
+- `IsReadOnly` - Indicates if collection is read-only
+
+**When to Use:**
+- When you need to know the size of the collection
+- When you need to add or remove items but don't need indexing
+- For general-purpose collection operations
+
+**Example:**
+```csharp
+public void AddUniqueItems(ICollection<int> collection, int[] newItems)
+{
+    foreach (var item in newItems)
+    {
+        if (!collection.Contains(item))
+        {
+            collection.Add(item);
+        }
+    }
+    Console.WriteLine($"Total items: {collection.Count}");
+}
+```
+
+### IList<T>
+
+Extends `ICollection<T>` and adds indexed access to elements.
+
+**Key Characteristics:**
+- Provides **indexed access** to elements via `[]` operator
+- Maintains **element order**
+- Supports **insertion** at specific positions
+- Can be fixed-size or dynamic
+- Namespace: `System.Collections.Generic`
+
+**Properties and Methods:**
+- All from `ICollection<T>` plus:
+- `this[int index]` - Gets or sets element at index
+- `IndexOf(T item)` - Returns index of item
+- `Insert(int index, T item)` - Inserts at specific position
+- `RemoveAt(int index)` - Removes element at index
+
+**When to Use:**
+- When you need to access elements by index
+- When order matters
+- When you need to insert or remove at specific positions
+- Most versatile for general list operations
+
+**Example:**
+```csharp
+public void ProcessOrderedList(IList<string> items)
+{
+    // Access by index
+    string first = items[0];
+    
+    // Insert at specific position
+    items.Insert(1, "new item");
+    
+    // Find position
+    int index = items.IndexOf("target");
+    if (index >= 0)
+    {
+        items.RemoveAt(index);
+    }
+}
+```
+
+### Array
+
+A fixed-size, strongly-typed collection with contiguous memory allocation.
+
+**Key Characteristics:**
+- **Fixed size** - cannot grow or shrink after creation
+- **Fastest access** due to contiguous memory
+- Implements `IList<T>`, `ICollection<T>`, `IEnumerable<T>`
+- Value type semantics for array of value types
+- Built into the language with special syntax
+
+**When to Use:**
+- When size is known and won't change
+- When performance is critical (fastest iteration and access)
+- When working with low-level or interop code
+- For small, fixed collections
+
+**Advantages:**
+- Extremely fast element access (O(1))
+- Low memory overhead
+- Type-safe at compile time
+- Supports multi-dimensional arrays
+
+**Disadvantages:**
+- Cannot resize (need to create new array and copy)
+- Fixed size must be known at creation
+- Inserting/removing elements is expensive
+
+### List<T>
+
+**Key Characteristics:**
+- **Generic** - type-safe at compile time
+- **Dynamic size** - automatically grows
+- **Best balance** of performance and flexibility
+- Implements `IList<T>`
+
+**Example:**
+```csharp
+List<string> names = new List<string>();
+names.Add("Alice");
+names.AddRange(new[] { "Bob", "Charlie" });
+names.Remove("Bob");
+names.RemoveAt(0);
+
+// Type-safe, no casting
+string first = names[0];
+```
+
+### Comparison Table
+
+| Feature | IEnumerable<T> | ICollection<T> | IList<T> | Array | List<T> |
+|---------|---------------|----------------|----------|-------|---------|
+| **Iteration** | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Count** | ❌ | ✅ | ✅ | ✅ (Length) | ✅ |
+| **Add/Remove** | ❌ | ✅ | ✅ | ❌ | ✅ |
+| **Index Access** | ❌ | ❌ | ✅ | ✅ | ✅ |
+| **Dynamic Size** | N/A | Depends | Depends | ❌ | ✅ |
+| **Type Safety** | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Performance** | N/A | Medium | Medium | **Fastest** | Fast |
+
+### Best Practices
+
+1. **Use interfaces for parameters:** Accept `IEnumerable<T>`, `ICollection<T>`, or `IList<T>` in method parameters for flexibility
+   ```csharp
+   // Good - accepts any collection
+   public void Process(IEnumerable<int> items) { }
+   
+   // Bad - too specific
+   public void Process(List<int> items) { }
+   ```
+
+2. **Return concrete types from methods:** Return `List<T>`, arrays, etc. to give callers more functionality
+   ```csharp
+   // Good - caller can use all List<T> features
+   public List<string> GetNames() => new List<string>();
+   ```
+
+3. **Choose based on needs:**
+   - Need only iteration? → `IEnumerable<T>`
+   - Need to add/remove? → `ICollection<T>` or `List<T>`
+   - Need indexing? → `IList<T>` or `List<T>`
+   - Fixed size and performance critical? → `Array`
+
+4. **Prefer List<T> for general use:** It's the most flexible and performs well in most scenarios
+
+5. **Use Array when:**
+   - Size is fixed and known
+   - Maximum performance is required
+   - Working with multi-dimensional data
 
 ## IQuerable vs IEnumerable
 
