@@ -20,6 +20,7 @@
 - [Garbage collection](#garbage-collection)
 - [Resource Management (using, IDisposable)](#resource-management-using-idisposable)
 - [Task vs Thread](#task-vs-thread)
+- [Concurrent and Parallel Programming](#concurrent-and-parallel-programming)
 - [When to Use Task.Run in .NET](#when-to-use-taskrun-in-net)
 
 ## .NET Core and .NET Framework
@@ -2522,6 +2523,508 @@ A **Task** is a higher-level abstraction representing an asynchronous operation.
 - ⚠️ **These are rare, specific scenarios**
 
 **Key Principle:** In modern .NET development, **always prefer Task over Thread** unless you have a very specific reason to use threads directly. Tasks provide better performance, cleaner code, and are the foundation of async/await programming.
+
+## Concurrent and Parallel Programming
+
+Concurrent and parallel programming in .NET allows you to execute multiple operations simultaneously, improving performance and responsiveness. Understanding the difference between concurrency and parallelism, and the tools available, is essential for building efficient applications.
+
+### Concurrency vs Parallelism
+
+**Concurrency:**
+- Multiple tasks making progress, but not necessarily at the same time
+- About **dealing with** multiple things at once
+- Can run on a single-core CPU (time-slicing)
+- Example: A server handling multiple requests (switching between them)
+
+**Parallelism:**
+- Multiple tasks executing simultaneously
+- About **doing** multiple things at once
+- Requires multi-core CPU
+- Example: Processing array elements on different CPU cores
+
+**Visual Difference:**
+```
+Concurrency (Single Core):     Parallelism (Multi Core):
+[Task A][Task B][Task A]       [Task A][Task B]
+       Time →                   [Task C][Task D]
+                                     Time →
+```
+
+### Parallel.For and Parallel.ForEach
+
+The `Parallel` class provides methods for parallel loops, automatically distributing work across available CPU cores.
+
+#### Parallel.For
+
+Executes a `for` loop in parallel.
+
+**Basic Usage:**
+```csharp
+// Sequential
+for (int i = 0; i < 1000; i++)
+{
+    ProcessItem(i);
+}
+
+// Parallel - automatically uses multiple cores
+Parallel.For(0, 1000, i =>
+{
+    ProcessItem(i);
+});
+```
+
+**With Options:**
+```csharp
+var options = new ParallelOptions
+{
+    MaxDegreeOfParallelism = 4, // Limit to 4 threads
+    CancellationToken = cancellationToken
+};
+
+Parallel.For(0, 1000, options, i =>
+{
+    ProcessItem(i);
+});
+```
+
+#### Parallel.ForEach
+
+Executes a `foreach` loop in parallel.
+
+**Basic Usage:**
+```csharp
+var items = GetItems();
+
+// Sequential
+foreach (var item in items)
+{
+    ProcessItem(item);
+}
+
+// Parallel
+Parallel.ForEach(items, item =>
+{
+    ProcessItem(item);
+});
+```
+
+**With Partitioning:**
+```csharp
+// Better performance for large collections
+var partitioner = Partitioner.Create(items, loadBalance: true);
+
+Parallel.ForEach(partitioner, item =>
+{
+    ProcessItem(item);
+});
+```
+
+**Real-World Example - Image Processing:**
+```csharp
+public void ProcessImages(string[] imagePaths)
+{
+    var options = new ParallelOptions
+    {
+        MaxDegreeOfParallelism = Environment.ProcessorCount
+    };
+
+    Parallel.ForEach(imagePaths, options, imagePath =>
+    {
+        using var image = Image.Load(imagePath);
+        image.Mutate(x => x.Resize(800, 600));
+        image.Save(GetOutputPath(imagePath));
+    });
+}
+```
+
+**When to Use Parallel.For/ForEach:**
+- ✅ CPU-bound operations (calculations, transformations)
+- ✅ Independent iterations (no dependencies between items)
+- ✅ Large datasets where overhead is justified
+- ❌ NOT for I/O-bound operations (use async/await instead)
+- ❌ NOT when order matters
+
+### Parallel.ForEachAsync (C# 10/.NET 6+)
+
+For asynchronous parallel operations, combining the benefits of parallelism and async/await.
+
+**Basic Usage:**
+```csharp
+await Parallel.ForEachAsync(urls, async (url, ct) =>
+{
+    var content = await httpClient.GetStringAsync(url, ct);
+    await ProcessContentAsync(content, ct);
+});
+```
+
+**Real-World Example - API Calls:**
+```csharp
+public async Task DownloadFilesAsync(string[] urls)
+{
+    var options = new ParallelOptions
+    {
+        MaxDegreeOfParallelism = 5 // Limit concurrent downloads
+    };
+
+    await Parallel.ForEachAsync(urls, options, async (url, ct) =>
+    {
+        var content = await httpClient.GetByteArrayAsync(url, ct);
+        var fileName = Path.GetFileName(url);
+        await File.WriteAllBytesAsync(fileName, content, ct);
+    });
+}
+```
+
+### Task.WhenAll and Task.WhenAny
+
+Combinators for working with multiple tasks concurrently.
+
+#### Task.WhenAll
+
+Waits for **all** tasks to complete.
+
+**Basic Usage:**
+```csharp
+var task1 = GetDataAsync("source1");
+var task2 = GetDataAsync("source2");
+var task3 = GetDataAsync("source3");
+
+// Wait for all to complete
+await Task.WhenAll(task1, task2, task3);
+
+Console.WriteLine(task1.Result);
+Console.WriteLine(task2.Result);
+Console.WriteLine(task3.Result);
+```
+
+**With Results:**
+```csharp
+var tasks = new[]
+{
+    GetDataAsync("source1"),
+    GetDataAsync("source2"),
+    GetDataAsync("source3")
+};
+
+string[] results = await Task.WhenAll(tasks);
+
+foreach (var result in results)
+{
+    Console.WriteLine(result);
+}
+```
+
+**Exception Handling:**
+```csharp
+try
+{
+    await Task.WhenAll(tasks);
+}
+catch (Exception ex)
+{
+    // Only the FIRST exception is thrown
+    // To get all exceptions:
+    var exceptions = tasks
+        .Where(t => t.IsFaulted)
+        .SelectMany(t => t.Exception.InnerExceptions);
+    
+    foreach (var exception in exceptions)
+    {
+        Console.WriteLine(exception.Message);
+    }
+}
+```
+
+#### Task.WhenAny
+
+Waits for **any** task to complete.
+
+**Basic Usage:**
+```csharp
+var task1 = GetDataAsync("source1");
+var task2 = GetDataAsync("source2");
+var task3 = GetDataAsync("source3");
+
+// Wait for first to complete
+Task<string> completedTask = await Task.WhenAny(task1, task2, task3);
+string result = await completedTask;
+
+Console.WriteLine($"First result: {result}");
+```
+
+### PLINQ (Parallel LINQ)
+
+Parallel LINQ automatically parallelizes LINQ queries.
+
+**Basic Usage:**
+```csharp
+var numbers = Enumerable.Range(1, 1000000);
+
+// Sequential LINQ
+var result = numbers
+    .Where(n => IsPrime(n))
+    .ToList();
+
+// Parallel LINQ
+var result = numbers
+    .AsParallel()
+    .Where(n => IsPrime(n))
+    .ToList();
+```
+
+**With Options:**
+```csharp
+var result = numbers
+    .AsParallel()
+    .WithDegreeOfParallelism(4)
+    .WithCancellation(cancellationToken)
+    .Where(n => IsPrime(n))
+    .ToList();
+```
+
+**Preserve Order:**
+```csharp
+// Unordered (faster)
+var result = numbers
+    .AsParallel()
+    .Where(n => n % 2 == 0)
+    .ToList();
+
+// Ordered (slower, maintains original order)
+var result = numbers
+    .AsParallel()
+    .AsOrdered()
+    .Where(n => n % 2 == 0)
+    .ToList();
+```
+
+**Aggregation:**
+```csharp
+// Parallel aggregation
+var sum = numbers
+    .AsParallel()
+    .Sum();
+
+var average = numbers
+    .AsParallel()
+    .Average();
+
+var max = numbers
+    .AsParallel()
+    .Max();
+```
+
+**When to Use PLINQ:**
+- ✅ CPU-bound LINQ queries
+- ✅ Large data sets
+- ✅ Complex transformations
+- ❌ NOT for small datasets (overhead outweighs benefits)
+- ❌ NOT when order is critical (unless using AsOrdered)
+
+### Concurrent Collections
+
+Thread-safe collections for concurrent scenarios.
+
+#### ConcurrentBag<T>
+
+Unordered collection for scenarios where order doesn't matter.
+
+```csharp
+var bag = new ConcurrentBag<int>();
+
+Parallel.For(0, 1000, i =>
+{
+    bag.Add(i); // Thread-safe
+});
+
+Console.WriteLine($"Count: {bag.Count}");
+```
+
+#### ConcurrentQueue<T>
+
+Thread-safe FIFO queue.
+
+```csharp
+var queue = new ConcurrentQueue<string>();
+
+// Producer
+Task.Run(() =>
+{
+    for (int i = 0; i < 100; i++)
+    {
+        queue.Enqueue($"Item {i}");
+    }
+});
+
+// Consumer
+Task.Run(() =>
+{
+    while (queue.TryDequeue(out var item))
+    {
+        ProcessItem(item);
+    }
+});
+```
+
+#### ConcurrentStack<T>
+
+Thread-safe LIFO stack.
+
+```csharp
+var stack = new ConcurrentStack<int>();
+
+Parallel.For(0, 100, i =>
+{
+    stack.Push(i);
+});
+
+while (stack.TryPop(out var item))
+{
+    Console.WriteLine(item);
+}
+```
+
+#### ConcurrentDictionary<TKey, TValue>
+
+Thread-safe dictionary (covered in detail in Collections section).
+
+```csharp
+var dict = new ConcurrentDictionary<int, string>();
+
+Parallel.For(0, 1000, i =>
+{
+    dict.TryAdd(i, $"Value {i}");
+});
+
+var value = dict.GetOrAdd(1001, k => $"Value {k}");
+```
+
+#### BlockingCollection<T>
+
+Producer-consumer pattern with blocking.
+
+```csharp
+var collection = new BlockingCollection<int>(boundedCapacity: 100);
+
+// Producer
+Task.Run(() =>
+{
+    for (int i = 0; i < 1000; i++)
+    {
+        collection.Add(i); // Blocks if full
+    }
+    collection.CompleteAdding();
+});
+
+// Consumer
+Task.Run(() =>
+{
+    foreach (var item in collection.GetConsumingEnumerable())
+    {
+        ProcessItem(item);
+    }
+});
+```
+
+### Channels (Modern Alternative)
+
+Modern async-friendly producer-consumer pattern.
+
+```csharp
+var channel = Channel.CreateBounded<int>(100);
+
+// Producer
+Task.Run(async () =>
+{
+    for (int i = 0; i < 1000; i++)
+    {
+        await channel.Writer.WriteAsync(i);
+    }
+    channel.Writer.Complete();
+});
+
+// Consumer
+Task.Run(async () =>
+{
+    await foreach (var item in channel.Reader.ReadAllAsync())
+    {
+        await ProcessItemAsync(item);
+    }
+});
+```
+
+### Best Practices
+
+**1. Choose the Right Tool**
+```csharp
+// CPU-bound, independent items → Parallel.ForEach
+Parallel.ForEach(items, item => ProcessCpuBound(item));
+
+// I/O-bound operations → Task.WhenAll
+await Task.WhenAll(items.Select(item => ProcessIoBoundAsync(item)));
+
+// I/O-bound with concurrency limit → Parallel.ForEachAsync
+await Parallel.ForEachAsync(items, new ParallelOptions { MaxDegreeOfParallelism = 10 },
+    async (item, ct) => await ProcessAsync(item, ct));
+```
+
+**2. Consider Overhead**
+```csharp
+// ❌ BAD - Too small for parallel
+Parallel.ForEach(Enumerable.Range(1, 10), i => DoSimpleWork(i));
+
+// ✅ GOOD - Large enough to benefit
+Parallel.ForEach(Enumerable.Range(1, 1000000), i => DoComplexWork(i));
+```
+
+### Performance Comparison
+
+```csharp
+// Example: Processing 1 million items
+
+// Sequential: ~10 seconds
+foreach (var item in items)
+{
+    ProcessItem(item);
+}
+
+// Parallel.ForEach: ~2.5 seconds (4-core CPU)
+Parallel.ForEach(items, item => ProcessItem(item));
+
+// PLINQ: ~2.8 seconds
+items.AsParallel().ForAll(item => ProcessItem(item));
+
+// Task.WhenAll: ~10 seconds (if CPU-bound, no benefit)
+await Task.WhenAll(items.Select(item => Task.Run(() => ProcessItem(item))));
+
+// Task.WhenAll: ~1 second (if I/O-bound, huge benefit!)
+await Task.WhenAll(items.Select(item => ProcessItemAsync(item)));
+```
+
+### Summary
+
+**For CPU-Bound Work:**
+- Use `Parallel.For`/`Parallel.ForEach` for simple loops
+- Use PLINQ for LINQ queries
+- Use `Task.Run` with `Task.WhenAll` for complex scenarios
+
+**For I/O-Bound Work:**
+- Use `async`/`await` with `Task.WhenAll`
+- Use `Parallel.ForEachAsync` for controlled concurrency
+- Never use `Parallel.For`/`ForEach` for I/O
+
+**For Producer-Consumer:**
+- Use `Channel<T>` for async scenarios
+- Use `BlockingCollection<T>` for sync scenarios
+
+**Key Principles:**
+- ✅ Measure performance before optimizing
+- ✅ Use the simplest tool that solves your problem
+- ✅ Consider overhead vs. benefit
+- ✅ Handle exceptions and cancellation properly
+- ✅ Avoid shared mutable state
+- ❌ Don't parallelize I/O with CPU-bound tools
+- ❌ Don't parallelize if operations depend on each other
 
 # When to Use Task.Run in .NET
 
