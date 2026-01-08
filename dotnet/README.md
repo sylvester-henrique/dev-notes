@@ -18,6 +18,7 @@
 - [Securing sensitive information in configuration files](#securing-sensitive-information-in-configuration-files)
 - [Framework-dependent and self-contained deployments](#framework-dependent-and-self-contained-deployments)
 - [Garbage collection](#garbage-collection)
+- [Resource Management (using, IDisposable)](#resource-management-using-idisposable)
 - [When to Use Task.Run in .NET](#when-to-use-taskrun-in-net)
 
 ## .NET Core and .NET Framework
@@ -2079,6 +2080,385 @@ Garbage Collection (GC) is an automatic memory management feature in .NET Core t
 - ✅ Prevents double-free errors
 - ✅ Automatic memory management
 - ✅ Improves developer productivity
+
+## Resource Management (using, IDisposable)
+
+Resource management in .NET is critical for properly handling unmanaged resources like file handles, database connections, network streams, and other system resources that aren't automatically managed by the garbage collector.
+
+### Why Resource Management Matters
+
+**The Problem:**
+- Garbage Collector (GC) manages **memory** automatically
+- GC does **NOT** manage unmanaged resources (file handles, network connections, database connections)
+- Unmanaged resources must be explicitly released to avoid resource leaks
+- Resource exhaustion can crash applications or degrade system performance
+
+**Example of Resource Leak:**
+```csharp
+// ❌ BAD - Resource leak
+public void ReadFile(string path)
+{
+    FileStream file = new FileStream(path, FileMode.Open);
+    // Read from file...
+    // File handle is never released!
+    // If this runs many times, you'll run out of file handles
+}
+```
+
+### The IDisposable Interface
+
+`IDisposable` is the standard interface for releasing unmanaged resources in .NET.
+
+**Interface Definition:**
+```csharp
+public interface IDisposable
+{
+    void Dispose();
+}
+```
+
+**When to Implement IDisposable:**
+- Your class holds unmanaged resources (file handles, database connections, network sockets)
+- Your class holds other `IDisposable` objects
+- Your class allocates large amounts of unmanaged memory
+- Your class uses COM objects or native libraries
+
+**Basic Implementation Pattern:**
+```csharp
+public class DatabaseConnection : IDisposable
+{
+    private SqlConnection _connection;
+    private bool _disposed = false;
+
+    public DatabaseConnection(string connectionString)
+    {
+        _connection = new SqlConnection(connectionString);
+        _connection.Open();
+    }
+
+    public void ExecuteQuery(string query)
+    {
+        if (_disposed)
+            throw new ObjectDisposedException(nameof(DatabaseConnection));
+            
+        // Execute query logic
+    }
+
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this); // Prevent finalizer from running
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (_disposed)
+            return;
+
+        if (disposing)
+        {
+            // Dispose managed resources
+            _connection?.Dispose();
+        }
+
+        // Free unmanaged resources here (if any)
+        
+        _disposed = true;
+    }
+
+    // Finalizer - only if you have unmanaged resources
+    ~DatabaseConnection()
+    {
+        Dispose(false);
+    }
+}
+```
+
+### The using Statement
+
+The `using` statement ensures that `Dispose()` is called automatically when the object goes out of scope, even if an exception occurs.
+
+**Syntax:**
+```csharp
+using (var resource = new DisposableResource())
+{
+    // Use resource
+} // Dispose() is automatically called here
+```
+
+**How it Works - Compiler Translation:**
+```csharp
+// What you write:
+using (var file = new FileStream("data.txt", FileMode.Open))
+{
+    // Read file
+}
+
+// What the compiler generates:
+FileStream file = new FileStream("data.txt", FileMode.Open);
+try
+{
+    // Read file
+}
+finally
+{
+    if (file != null)
+    {
+        file.Dispose();
+    }
+}
+```
+
+**Common Examples:**
+```csharp
+// File operations
+using (var reader = new StreamReader("file.txt"))
+{
+    string content = reader.ReadToEnd();
+    Console.WriteLine(content);
+}
+
+// Database operations
+using (var connection = new SqlConnection(connectionString))
+using (var command = new SqlCommand(query, connection))
+{
+    connection.Open();
+    var result = command.ExecuteScalar();
+}
+
+// HTTP requests
+using (var client = new HttpClient())
+{
+    var response = await client.GetAsync("https://api.example.com");
+    var content = await response.Content.ReadAsStringAsync();
+}
+
+// Multiple resources
+using (var input = new FileStream("input.txt", FileMode.Open))
+using (var output = new FileStream("output.txt", FileMode.Create))
+{
+    input.CopyTo(output);
+}
+```
+
+### Using Declarations (C# 8.0+)
+
+A more concise syntax where `Dispose()` is called when the variable goes out of scope at the end of the enclosing block.
+
+**Syntax:**
+```csharp
+using var resource = new DisposableResource();
+// Use resource throughout the method
+// Dispose() called at end of method
+```
+
+**Examples:**
+```csharp
+public void ProcessFile(string path)
+{
+    using var reader = new StreamReader(path);
+    using var writer = new StreamWriter("output.txt");
+    
+    string line;
+    while ((line = reader.ReadLine()) != null)
+    {
+        writer.WriteLine(line.ToUpper());
+    }
+    
+    // Both reader and writer automatically disposed here
+}
+
+// Multiple using declarations
+public async Task DownloadAndSaveAsync(string url, string filePath)
+{
+    using var client = new HttpClient();
+    using var response = await client.GetAsync(url);
+    using var fileStream = new FileStream(filePath, FileMode.Create);
+    
+    await response.Content.CopyToAsync(fileStream);
+    // All resources disposed at method end
+}
+```
+
+**Benefits:**
+- Cleaner, more readable code
+- Resources disposed in reverse order of declaration
+- Reduces nesting levels
+- Scope is clear - disposal at end of containing block
+
+### IAsyncDisposable and await using
+
+For asynchronous resource disposal, introduced in C# 8.0 and .NET Core 3.0.
+
+**Interface:**
+```csharp
+public interface IAsyncDisposable
+{
+    ValueTask DisposeAsync();
+}
+```
+
+**When to Use:**
+- Asynchronous I/O operations in disposal
+- Network streams that need async cleanup
+- Async database connections
+- Any resource requiring async cleanup operations
+
+**Implementation:**
+```csharp
+public class AsyncDatabaseConnection : IAsyncDisposable
+{
+    private DbConnection _connection;
+    private bool _disposed = false;
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_disposed)
+            return;
+
+        if (_connection != null)
+        {
+            await _connection.CloseAsync();
+            await _connection.DisposeAsync();
+        }
+
+        _disposed = true;
+        GC.SuppressFinalize(this);
+    }
+}
+```
+
+**Using await using:**
+```csharp
+// await using statement
+public async Task ProcessDataAsync()
+{
+    await using (var connection = new AsyncDatabaseConnection())
+    {
+        // Use connection
+    } // DisposeAsync() called here
+}
+
+// await using declaration (C# 8.0+)
+public async Task ProcessDataAsync()
+{
+    await using var connection = new AsyncDatabaseConnection();
+    await using var command = connection.CreateCommand();
+    
+    // Use resources
+    // DisposeAsync() called at method end for both
+}
+```
+
+### Common Resource Types
+
+**File I/O:**
+```csharp
+using var stream = new FileStream("file.txt", FileMode.Open);
+using var reader = new StreamReader(stream);
+using var writer = new StreamWriter("output.txt");
+```
+
+**Database Connections:**
+```csharp
+using var connection = new SqlConnection(connectionString);
+using var command = connection.CreateCommand();
+using var reader = command.ExecuteReader();
+```
+
+**Network Resources:**
+```csharp
+using var client = new HttpClient();
+using var tcpClient = new TcpClient();
+using var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+```
+
+**Memory Streams:**
+```csharp
+using var memoryStream = new MemoryStream();
+using var binaryWriter = new BinaryWriter(memoryStream);
+```
+
+**Graphics Resources:**
+```csharp
+using var bitmap = new Bitmap(100, 100);
+using var graphics = Graphics.FromImage(bitmap);
+using var pen = new Pen(Color.Black);
+```
+
+### Best Practices
+
+**1. Always Use `using` for IDisposable Objects**
+```csharp
+// ✅ GOOD
+using var connection = new SqlConnection(connectionString);
+
+// ❌ BAD - Easy to forget Dispose()
+var connection = new SqlConnection(connectionString);
+try
+{
+    // Use connection
+}
+finally
+{
+    connection.Dispose(); // Might be forgotten
+}
+```
+
+**2. Don't Dispose Objects You Don't Own**
+```csharp
+public class Service
+{
+    private readonly HttpClient _client;
+
+    // HttpClient injected - don't dispose it
+    public Service(HttpClient client)
+    {
+        _client = client;
+    }
+
+    // ❌ DON'T dispose injected dependencies
+    // public void Dispose() => _client.Dispose();
+}
+```
+
+**3. Dispose in Reverse Order of Creation**
+```csharp
+// Using declarations automatically do this
+using var connection = new SqlConnection();
+using var command = connection.CreateCommand();
+using var reader = command.ExecuteReader();
+// Disposed in reverse: reader, command, connection
+```
+
+**4. Be Careful with HttpClient**
+```csharp
+// ❌ BAD - Creates new HttpClient per request (socket exhaustion)
+public async Task<string> GetDataAsync(string url)
+{
+    using var client = new HttpClient();
+    return await client.GetStringAsync(url);
+}
+
+// ✅ GOOD - Reuse HttpClient (singleton or IHttpClientFactory)
+private static readonly HttpClient _client = new HttpClient();
+
+public async Task<string> GetDataAsync(string url)
+{
+    return await _client.GetStringAsync(url);
+}
+
+// ✅ BETTER - Use IHttpClientFactory in ASP.NET Core
+public class MyService
+{
+    private readonly HttpClient _client;
+
+    public MyService(IHttpClientFactory factory)
+    {
+        _client = factory.CreateClient();
+    }
+}
+```
 
 # When to Use Task.Run in .NET
 
