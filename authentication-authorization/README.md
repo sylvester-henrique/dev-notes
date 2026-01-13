@@ -88,6 +88,102 @@ RBAC can be implemented in various ways:
 
 Many modern authentication platforms (like Auth0) include built-in RBAC features, allowing you to define roles and permissions that are included in JWTs issued to users.
 
-## SSL Termination
+## TLS (Transport Layer Security)
 
-TODO
+TLS is a cryptographic protocol designed to provide secure communication over a network. It's the successor to SSL (Secure Sockets Layer) and is the foundation of HTTPS - the secure version of HTTP.
+
+### What TLS Does
+
+- **Encryption**: Scrambles data so only the intended recipient can read it
+- **Authentication**: Verifies the identity of the server (and optionally the client) using digital certificates
+- **Integrity**: Ensures data hasn't been tampered with during transmission
+
+### How TLS Works (TLS Handshake)
+
+1. **Client Hello**: Client initiates connection and sends supported TLS versions and cipher suites
+2. **Server Hello**: Server responds with chosen TLS version and cipher suite, and sends its certificate
+3. **Certificate Verification**: Client verifies the server's certificate with a Certificate Authority (CA)
+4. **Key Exchange**: Client and server establish a shared secret key using public-key cryptography
+5. **Secure Connection**: Both parties use the shared key to encrypt and decrypt data
+
+### TLS Certificates
+
+TLS certificates are digital documents that:
+- Prove the identity of a website or server
+- Are issued by trusted Certificate Authorities (Let's Encrypt, DigiCert, etc.)
+- Contain the server's public key
+- Include information about the domain, organization, and validity period
+
+### Common Use Cases
+
+- **HTTPS**: Securing web traffic between browsers and servers
+- **Email**: Encrypting SMTP, IMAP, and POP3 connections
+- **VPNs**: Securing virtual private network connections
+- **APIs**: Protecting API communications
+- **File Transfers**: Securing FTP (FTPS) and other protocols
+
+### TLS Versions
+
+- **TLS 1.0** (1999) - Deprecated, insecure
+- **TLS 1.1** (2006) - Deprecated, insecure
+- **TLS 1.2** (2008) - Still widely used, secure
+- **TLS 1.3** (2018) - Current standard, faster and more secure
+
+Modern applications should use TLS 1.2 or higher, with TLS 1.3 being preferred for its improved performance and security.
+
+## TLS Termination
+
+TLS termination (also called SSL termination) is the process of decrypting encrypted HTTPS traffic at a specific point in the network infrastructure, typically at a load balancer or reverse proxy, before forwarding the traffic to backend servers as unencrypted HTTP.
+
+### How It Works
+
+1. Client sends an HTTPS request (encrypted with SSL/TLS)
+2. The load balancer or proxy receives the request
+3. The load balancer decrypts the traffic using its SSL certificate
+4. The decrypted HTTP traffic is forwarded to backend servers
+5. Backend servers process the request and send a response
+6. The load balancer encrypts the response and sends it back to the client
+
+### Why Use TLS Termination
+
+- **Reduced Server Load**: Backend servers don't need to handle the CPU-intensive encryption/decryption process
+- **Simplified Certificate Management**: SSL certificates are managed in one place rather than on every backend server
+- **Better Load Balancing**: The load balancer can inspect request content (headers, cookies) to make routing decisions
+- **Centralized Security**: Security policies, WAF rules, and monitoring can be applied at a single point
+- **Performance**: Dedicated hardware or optimized software at the load balancer level handles encryption more efficiently
+
+### TLS Termination vs TLS Passthrough
+
+- **TLS Termination**: Decrypts traffic at the load balancer, forwards as HTTP to backend
+  - ✅ Better performance for backend servers
+  - ✅ Easier certificate management
+  - ❌ Traffic between load balancer and backend is unencrypted
+
+- **TLS Passthrough**: Forwards encrypted traffic directly to backend servers without decrypting
+  - ✅ End-to-end encryption all the way to the backend
+  - ❌ Higher CPU load on backend servers
+  - ❌ Load balancer cannot inspect traffic for routing decisions
+
+### TLS Bridging (Re-encryption)
+
+A hybrid approach where:
+1. Traffic is decrypted at the load balancer (termination)
+2. Load balancer inspects and processes the request
+3. Traffic is re-encrypted before forwarding to backend servers
+
+This provides both the benefits of termination (inspection, routing) and end-to-end encryption.
+
+### Common Tools and Services
+
+- **Cloud Load Balancers**: AWS ALB/NLB, Azure Load Balancer, Google Cloud Load Balancing
+- **Reverse Proxies**: Nginx, HAProxy, Apache HTTP Server
+- **CDN Services**: Cloudflare, Akamai, AWS CloudFront
+- **API Gateways**: Kong, AWS API Gateway, Azure API Management
+
+### Security Considerations
+
+When using TLS termination, ensure:
+- The network between load balancer and backend is trusted (private network/VPC)
+- Use TLS bridging if compliance requires end-to-end encryption
+- Keep TLS certificates updated and use strong cipher suites
+- Monitor and log all traffic at the termination point
