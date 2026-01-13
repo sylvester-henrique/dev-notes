@@ -16,6 +16,9 @@ Quick reference notes for programming concepts and technologies
 ### Programming Concepts
 - [Microservices](./microservices/README.md) - Microservices architecture patterns and best practices
 
+### Security
+- [Authentication and Authorization](./authentication-authorization/README.md)
+
 ## 📝 Note
 
 These notes are continuously updated as I learn and encounter new concepts.
