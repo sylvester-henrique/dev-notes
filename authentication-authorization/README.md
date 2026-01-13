@@ -264,3 +264,115 @@ When using TLS termination, ensure:
 - Use TLS bridging if compliance requires end-to-end encryption
 - Keep TLS certificates updated and use strong cipher suites
 - Monitor and log all traffic at the termination point
+
+## Cross-Site Request Forgery (CSRF)
+
+CSRF is a security vulnerability that allows an attacker to trick a user's browser into performing unwanted actions on a web application where the user is authenticated. The attack exploits the browser's automatic inclusion of credentials (cookies, session tokens) with requests to a site.
+
+### How CSRF Attacks Work
+
+1. **User Authentication**: User logs into a legitimate website (e.g., bank.com) and receives a session cookie
+2. **Malicious Site Visit**: While still logged in, user visits a malicious website or clicks a malicious link
+3. **Forged Request**: The malicious site triggers a request to the legitimate site (e.g., transfer funds)
+4. **Automatic Credentials**: Browser automatically includes the session cookie with the request
+5. **Action Executed**: The legitimate site processes the request as if the user intentionally made it
+
+### Example Attack Scenario
+
+```html
+<!-- Malicious website contains this hidden form -->
+<form action="https://bank.com/transfer" method="POST" id="csrf-form">
+  <input type="hidden" name="to_account" value="attacker123">
+  <input type="hidden" name="amount" value="10000">
+</form>
+<script>
+  document.getElementById('csrf-form').submit();
+</script>
+```
+
+When the victim visits this page, their browser automatically submits the form with their bank.com session cookie, potentially transferring money without their knowledge.
+
+### CSRF vs XSS (Cross-Site Scripting)
+
+- **CSRF**: Exploits the trust a website has in the user's browser. Forces the user to execute unwanted actions.
+- **XSS**: Exploits the trust a user has in a website. Injects malicious scripts into the website.
+
+### CSRF Protection Methods
+
+#### 1. CSRF Tokens (Synchronizer Token Pattern)
+
+The most common defense mechanism:
+- Server generates a unique, random token for each session or request
+- Token is embedded in forms or sent with requests
+- Server validates the token before processing the request
+
+```html
+<form action="/transfer" method="POST">
+  <input type="hidden" name="csrf_token" value="random-token-value">
+  <input type="text" name="amount">
+  <button type="submit">Transfer</button>
+</form>
+```
+
+#### 2. SameSite Cookie Attribute
+
+Modern browsers support the SameSite attribute to prevent cookies from being sent with cross-site requests:
+
+```
+Set-Cookie: sessionId=abc123; SameSite=Strict
+Set-Cookie: sessionId=abc123; SameSite=Lax
+```
+
+- **Strict**: Cookie is never sent with cross-site requests
+- **Lax**: Cookie is sent with top-level navigations (GET requests) but not with embedded requests
+- **None**: Cookie is always sent (requires Secure attribute)
+
+#### 3. Double Submit Cookie
+
+- Server sets a random token in both a cookie and a request parameter
+- Server verifies that both values match
+- Attacker cannot read the cookie value due to same-origin policy
+
+#### 4. Custom Headers
+
+For AJAX/API requests:
+- Require custom headers (e.g., `X-Requested-With: XMLHttpRequest`)
+- Browsers prevent cross-origin requests from setting custom headers without CORS
+- If the header is present, the request likely originated from your application
+
+#### 5. Origin and Referer Headers
+
+Check the `Origin` or `Referer` headers to ensure requests come from your domain:
+```
+Origin: https://yoursite.com
+Referer: https://yoursite.com/page
+```
+
+### CSRF Protection by Framework
+
+Most modern frameworks provide built-in CSRF protection:
+
+- **ASP.NET Core**: `[ValidateAntiForgeryToken]` attribute, `@Html.AntiForgeryToken()`
+- **Django**: `{% csrf_token %}` template tag
+- **Ruby on Rails**: `protect_from_forgery` in controllers
+- **Express.js**: `csurf` middleware
+- **Laravel**: Automatic CSRF protection for forms
+- **Spring Security**: CSRF protection enabled by default
+
+### When CSRF Tokens Are Not Needed
+
+- **Stateless APIs using JWT**: JWTs are not automatically sent by browsers (unlike cookies)
+- **Read-only operations**: GET requests that don't modify data
+- **Public APIs**: Endpoints that don't require authentication
+
+However, if using cookie-based authentication (even with JWTs stored in cookies), CSRF protection is still necessary.
+
+### Best Practices
+
+- **Always use CSRF tokens** for state-changing operations (POST, PUT, DELETE)
+- **Use SameSite=Strict or Lax** for session cookies
+- **Avoid GET requests** for operations that modify data
+- **Implement proper CORS policies** to control cross-origin access
+- **Use framework's built-in protection** rather than rolling your own
+- **Combine multiple defenses** for defense in depth (CSRF tokens + SameSite cookies)
+- **Validate content type** to ensure requests are sent as expected (e.g., application/json)
