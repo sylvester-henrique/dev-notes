@@ -37,7 +37,56 @@ It's widely used because it centralizes security, supports multiple identity pro
 
 ## Role-based Access Control (RBAC)
 
-TODO
+RBAC is an authorization model that restricts system access based on a user's role within an organization. Instead of assigning permissions directly to individual users, permissions are assigned to roles, and users are assigned to those roles.
+
+### Core Concepts
+
+- **Users**: Individual accounts or entities that need access to the system
+- **Roles**: Named job functions or responsibilities (e.g., Admin, Editor, Viewer)
+- **Permissions**: Specific actions that can be performed on resources (e.g., read, write, delete)
+- **Resources**: The objects or data that need protection (e.g., documents, API endpoints, database records)
+
+### How RBAC Works
+
+1. Define roles based on job functions or responsibilities
+2. Assign permissions to each role based on what that role needs to do
+3. Assign users to appropriate roles
+4. When a user attempts an action, the system checks if their role has the required permission
+
+### Advantages of RBAC
+
+- **Simplified Management**: Easier to manage permissions at the role level rather than per user
+- **Scalability**: Adding new users is as simple as assigning them to existing roles
+- **Compliance**: Easier to audit and ensure users have appropriate access levels
+- **Least Privilege**: Users only get access to what they need for their role
+- **Reduced Errors**: Fewer chances of granting incorrect permissions
+
+### Example
+
+```
+Role: Admin
+Permissions: create, read, update, delete
+
+Role: Editor
+Permissions: read, update
+
+Role: Viewer
+Permissions: read
+
+User: John → Role: Admin
+User: Sarah → Role: Editor
+User: Mike → Role: Viewer
+```
+
+### Implementation
+
+RBAC can be implemented in various ways:
+- **In the application code**: Checking user roles before executing actions
+- **At the API level**: Using middleware to verify roles on requests
+- **In the database**: Using database roles and permissions
+- **Through identity providers**: Services like Auth0, Azure AD, or AWS IAM manage roles and permissions
+
+Many modern authentication platforms (like Auth0) include built-in RBAC features, allowing you to define roles and permissions that are included in JWTs issued to users.
 
 ## SSL Termination
 
