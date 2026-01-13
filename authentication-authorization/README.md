@@ -94,6 +94,86 @@ The signature is used to verify that the sender is who they claim to be and that
 - **Implement Refresh Tokens**: Use short-lived access tokens with longer-lived refresh tokens
 - **Consider Token Revocation**: Implement a blacklist or use short expiration times for critical applications
 
+## Session-Based Authentication
+
+Session-based authentication is the traditional approach to maintaining user state in web applications. When a user logs in, the server creates a session, stores session data on the server side, and sends a session identifier (typically in a cookie) to the client's browser.
+
+### How Session-Based Authentication Works
+
+1. **User Login**: User submits credentials (username/password) to the server
+2. **Credential Validation**: Server validates credentials against the database
+3. **Session Creation**: Server creates a session object and stores it (in memory, database, or cache like Redis)
+4. **Session ID Generation**: Server generates a unique session ID
+5. **Cookie Sent**: Server sends session ID to client in a cookie (e.g., `Set-Cookie: sessionId=abc123`)
+6. **Browser Storage**: Browser automatically stores the cookie
+7. **Subsequent Requests**: Browser automatically includes the cookie with every request to the same domain
+8. **Session Lookup**: Server reads session ID from cookie and retrieves session data
+9. **Access Granted**: If session is valid and not expired, server processes the request
+10. **Logout**: Server destroys the session and clears the cookie
+
+### Session Cookie Attributes
+
+Important security attributes for session cookies:
+
+```
+Set-Cookie: sessionId=abc123; HttpOnly; Secure; SameSite=Strict; Max-Age=3600; Path=/
+```
+
+- **HttpOnly**: Prevents JavaScript access, protects against XSS attacks
+- **Secure**: Cookie only sent over HTTPS
+- **SameSite**: Prevents CSRF attacks (Strict, Lax, or None)
+- **Max-Age/Expires**: Cookie expiration time
+- **Path**: Restricts cookie to specific URL paths
+- **Domain**: Controls which domains receive the cookie
+
+### Advantages of Session-Based Authentication
+
+- **Secure Session Data**: Sensitive data stored on server, not exposed in token
+- **Easy Revocation**: Immediate logout by deleting server-side session
+- **Smaller Cookie Size**: Only session ID sent with each request
+- **Fine-Grained Control**: Easy to invalidate all sessions for a user
+- **Session Tracking**: Can track active sessions and user activity
+- **Familiar Pattern**: Well-understood and widely supported
+
+### Disadvantages of Session-Based Authentication
+
+- **Stateful**: Server must maintain session state, complicating horizontal scaling
+- **Memory/Storage Overhead**: Session data consumes server resources
+- **Scalability Challenges**: Requires session sharing across multiple servers (sticky sessions or shared storage)
+- **CSRF Vulnerable**: Requires additional CSRF protection
+- **Not Ideal for APIs**: Less suitable for stateless REST APIs and microservices
+- **Mobile Limitations**: Cookie handling can be problematic in mobile apps
+
+### Session vs JWT Comparison
+
+| Aspect | Session-Based | JWT |
+|--------|---------------|-----|
+| **State** | Stateful (server stores data) | Stateless (self-contained) |
+| **Storage** | Server-side | Client-side |
+| **Scalability** | Challenging (needs shared storage) | Easy (no server state) |
+| **Revocation** | Immediate (delete session) | Difficult (needs blacklist) |
+| **Data Size** | Small cookie (ID only) | Larger token (contains data) |
+| **Security** | Data hidden on server | Data visible (encoded, not encrypted) |
+| **CSRF** | Vulnerable (needs protection) | Less vulnerable (if not in cookie) |
+| **Cross-Domain** | Limited | Excellent |
+| **Best For** | Traditional web apps | SPAs, mobile apps, microservices |
+
+### When to Use Session-Based Authentication
+
+✅ **Good fit:**
+- Traditional server-rendered web applications
+- Applications requiring immediate session invalidation
+- When you need to store large amounts of user state
+- Internal enterprise applications
+- When CSRF protection is already in place
+
+❌ **Not ideal for:**
+- Stateless REST APIs
+- Microservices architectures
+- Mobile applications
+- Cross-domain/CORS scenarios
+- High-scale distributed systems without shared session storage
+
 ## OAuth
 
 OAuth 2.0 is an authorization framework that lets a user grant limited access to their resources without sharing credentials.
