@@ -2,20 +2,97 @@
 
 ## JSON Web Token (JWT)
 
-It is a standard for securely transmitting data over the internet as a JSON object. The information transmitted can be verified and trusted because it is digitally signed using a secret or a public/private key pair. It is commonly used for authentication and authorization.
+JWT is an open standard (RFC 7519) for securely transmitting information between parties as a JSON object. The information can be verified and trusted because it is digitally signed using a secret (HMAC) or a public/private key pair (RSA/ECDSA). JWTs are commonly used for authentication and authorization in modern web applications and APIs.
+
+### What Problem Does JWT Solve?
+
+Traditional session-based authentication stores user data on the server, requiring the server to maintain session state. This becomes challenging in distributed systems with multiple servers. JWT provides a stateless alternative where the token itself contains all necessary user information, eliminating the need for server-side session storage.
 
 ### Structure of JWT
 
-- **Header**: contains metadata of the token, with the type of token and the algorithm used.
-- **Payload**: contains the claims that can be user data or permissions
-- **Signature**: It is used to verify that the sender of the JWT is who they claim to be and that the token hasn't been modified.
+A JWT consists of three parts separated by dots (`.`):
+
+```
+header.payload.signature
+```
+
+**Example JWT:**
+```
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+```
+
+#### 1. Header
+
+Contains metadata about the token:
+```json
+{
+  "alg": "HS256",    // Algorithm used for signing
+  "typ": "JWT"       // Token type
+}
+```
+This is Base64Url encoded to form the first part of the JWT.
+
+#### 2. Payload
+
+Contains the claims (statements about the user and additional data):
+```json
+{
+  "sub": "1234567890",           // Subject (user ID)
+  "name": "John Doe",            // User name
+  "email": "john@example.com",   // User email
+  "role": "admin",               // User role
+  "iat": 1516239022,             // Issued at (timestamp)
+  "exp": 1516242622              // Expiration time (timestamp)
+}
+```
+
+**Types of claims:**
+- **Registered claims**: Predefined claims like `iss` (issuer), `exp` (expiration), `sub` (subject), `aud` (audience)
+- **Public claims**: Custom claims that should be collision-resistant
+- **Private claims**: Custom claims agreed upon between parties
+
+This is also Base64Url encoded to form the second part of the JWT.
+
+#### 3. Signature
+
+Ensures the token hasn't been tampered with. Created by:
+```
+HMACSHA256(
+  base64UrlEncode(header) + "." + base64UrlEncode(payload),
+  secret
+)
+```
+
+The signature is used to verify that the sender is who they claim to be and that the message hasn't been changed.
+
+### How JWT Authentication Works
+
+1. **User Login**: User sends credentials (username/password) to the server
+2. **Token Generation**: Server validates credentials and generates a JWT containing user information
+3. **Token Response**: Server returns the JWT to the client
+4. **Token Storage**: Client stores the JWT (typically in localStorage or httpOnly cookie)
+5. **Authenticated Requests**: Client includes JWT in the Authorization header: `Authorization: Bearer <token>`
+6. **Token Validation**: Server validates the JWT signature and extracts user information
+7. **Access Granted**: If valid, server processes the request with the user's context
 
 ### Advantages of JWT
 
-- **Stateless**: no need to store session data on the server
-- **Compact and efficient**: JWT are compact and can be easily transmitted over the internet
-- **Self-contained**: all necessary information for the authentication and authorization is included in the token
-- **Cross-Domain support**: works with CORS (Cross-origin resource sharing) making it suitable for APIs.
+- **Stateless**: No need to store session data on the server; all information is in the token
+- **Compact and Efficient**: Small size makes it easy to transmit via URL, POST parameter, or HTTP header
+- **Self-contained**: Contains all necessary information about the user, reducing database queries
+- **Cross-Domain Support**: Works seamlessly with CORS, perfect for microservices and distributed systems
+- **Mobile Friendly**: Ideal for mobile apps where cookie-based sessions are problematic
+- **Scalability**: No server-side session storage means easier horizontal scaling
+
+### Security Best Practices
+
+- **Use HTTPS**: Always transmit JWTs over secure connections
+- **Set Expiration**: Include `exp` claim to limit token lifetime (typically 15 minutes to 1 hour)
+- **Use Strong Secrets**: Use long, random secrets for HMAC or secure key pairs for RSA/ECDSA
+- **Validate Thoroughly**: Always verify signature, expiration, and issuer on the server
+- **Don't Store Sensitive Data**: Never put passwords or sensitive information in the payload (it's just encoded, not encrypted)
+- **Implement Refresh Tokens**: Use short-lived access tokens with longer-lived refresh tokens
+- **Consider Token Revocation**: Implement a blacklist or use short expiration times for critical applications
 
 ## OAuth
 
