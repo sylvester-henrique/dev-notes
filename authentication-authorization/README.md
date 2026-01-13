@@ -94,6 +94,152 @@ The signature is used to verify that the sender is who they claim to be and that
 - **Implement Refresh Tokens**: Use short-lived access tokens with longer-lived refresh tokens
 - **Consider Token Revocation**: Implement a blacklist or use short expiration times for critical applications
 
+## Refresh Tokens
+
+Refresh tokens are long-lived credentials used to obtain new access tokens without requiring the user to re-authenticate. They solve a critical problem: how to maintain security (short-lived access tokens) while providing good user experience (not logging out users frequently).
+
+### The Problem Refresh Tokens Solve
+
+**Without Refresh Tokens:**
+- **Long-lived access tokens**: If access tokens last hours/days, they're more vulnerable if stolen
+- **Short-lived access tokens**: Users must re-login every few minutes (poor UX)
+
+**With Refresh Tokens:**
+- Access tokens can be very short-lived (5-15 minutes)
+- Refresh tokens allow getting new access tokens without re-login
+- Better security: compromised access tokens expire quickly
+- Better UX: users stay logged in for days/weeks
+
+### How Refresh Tokens Work
+
+```
+1. User Login
+   ↓
+2. Server returns BOTH tokens
+   - Access Token (short-lived, e.g., 15 min)
+   - Refresh Token (long-lived, e.g., 7 days)
+   ↓
+3. Client uses Access Token for API requests
+   ↓
+4. Access Token expires
+   ↓
+5. Client sends Refresh Token to /refresh endpoint
+   ↓
+6. Server validates Refresh Token
+   ↓
+7. Server returns NEW Access Token (and optionally new Refresh Token)
+   ↓
+8. Client continues making requests with new Access Token
+```
+
+### Token Storage Strategy
+
+#### Access Tokens
+- **Web Apps (SPA)**: Memory (JavaScript variable) or sessionStorage
+- **Mobile Apps**: Secure memory or encrypted storage
+- **Never**: localStorage (vulnerable to XSS if access token is long-lived)
+
+#### Refresh Tokens
+- **Web Apps (SPA)**: HttpOnly cookie (most secure) or localStorage with encryption
+- **Mobile Apps**: Secure storage (Keychain on iOS, Keystore on Android)
+- **Never**: Regular cookies without HttpOnly, or unencrypted storage
+
+
+### Refresh Token Security Features
+
+#### 1. Token Rotation
+Every time a refresh token is used, issue a new one and invalidate the old one:
+```javascript
+// Server-side pseudo code
+async function refreshEndpoint(oldRefreshToken) {
+  const user = await validateRefreshToken(oldRefreshToken);
+  
+  // Generate new tokens
+  const newAccessToken = generateAccessToken(user);
+  const newRefreshToken = generateRefreshToken(user);
+  
+  // Invalidate old refresh token
+  await revokeRefreshToken(oldRefreshToken);
+  
+  // Store new refresh token
+  await storeRefreshToken(newRefreshToken, user.id);
+  
+  return { accessToken: newAccessToken, refreshToken: newRefreshToken };
+}
+```
+
+#### 2. Refresh Token Reuse Detection
+Detect if a refresh token is used multiple times (possible attack):
+```javascript
+async function validateRefreshToken(token) {
+  const tokenData = await getRefreshToken(token);
+  
+  // If token was already used (revoked), it's suspicious
+  if (tokenData.revoked) {
+    // Revoke ALL refresh tokens for this user
+    await revokeAllUserTokens(tokenData.userId);
+    throw new Error('Token reuse detected - security breach');
+  }
+  
+  return tokenData;
+}
+```
+
+#### 3. Refresh Token Family Tracking
+Track token families to detect stolen tokens:
+- Each refresh creates a new token in the same "family"
+- If an old token from the family is used, revoke entire family
+- Prevents attackers from using stolen tokens
+
+#### 4. Absolute Expiration
+Refresh tokens should have an absolute maximum lifetime:
+```javascript
+{
+  userId: 123,
+  tokenId: "abc...",
+  issuedAt: "2026-01-01T00:00:00Z",
+  expiresAt: "2026-01-08T00:00:00Z",  // 7 days absolute limit
+  lastUsedAt: "2026-01-05T12:30:00Z"
+}
+```
+
+### Advantages of Refresh Tokens
+
+- **Security**: Short-lived access tokens limit damage if stolen
+- **User Experience**: Users stay logged in without frequent re-authentication
+- **Revocation**: Can invalidate refresh tokens immediately (logout, security breach)
+- **Device Tracking**: Can track and manage devices/sessions per user
+- **Granular Control**: Revoke access per device without affecting others
+
+### Disadvantages of Refresh Tokens
+
+- **Complexity**: More implementation complexity than simple long-lived tokens
+- **Storage Required**: Server must store and manage refresh tokens
+- **Additional Requests**: Extra network call to refresh expired tokens
+- **Security Overhead**: Requires proper token rotation, reuse detection, secure storage
+
+### When to Use Refresh Tokens
+
+✅ **Use refresh tokens when:**
+- Building user-facing applications (web, mobile, desktop)
+- Security is important but you want good UX
+- You need ability to revoke access remotely
+- Users should stay logged in for extended periods
+
+❌ **Don't use refresh tokens for:**
+- Server-to-server communication (use client credentials)
+- Short-lived browser sessions (use session-based auth)
+- Simple internal tools with low security needs
+
+### Popular Libraries & Implementations
+
+- **Auth0**: Built-in refresh token support with rotation
+- **OAuth 2.0**: Refresh token grant type (`grant_type=refresh_token`)
+- **JWT + Custom**: Combine JWT access tokens with server-managed refresh tokens
+- **Firebase Auth**: Automatic token refresh
+- **AWS Cognito**: Refresh token support out of the box
+- **Keycloak**: Open-source identity provider with refresh tokens
+
 ## Session-Based Authentication
 
 Session-based authentication is the traditional approach to maintaining user state in web applications. When a user logs in, the server creates a session, stores session data on the server side, and sends a session identifier (typically in a cookie) to the client's browser.
