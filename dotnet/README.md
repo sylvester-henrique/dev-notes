@@ -1654,6 +1654,24 @@ public class AuthController : ControllerBase
 
 ### Authorization Techniques
 
+**Key Differences:**
+
+- **Role-Based**: Simplest approach. Use when you have well-defined roles (Admin, User, Manager) and authorization is based solely on role membership.
+
+- **Claims-Based**: Use when authorization depends on user attributes or characteristics (email verified, employee number, department). More flexible than roles but still declarative.
+
+- **Policy-Based**: Most flexible for complex scenarios. Use when you need custom business logic (age verification, subscription level, time-based access, combining multiple conditions).
+
+- **Resource-Based**: Use when authorization depends on the specific resource being accessed (document ownership, team membership, content creator). Requires imperative authorization checks.
+
+**Choosing the Right Technique:**
+
+1. Start with **Role-Based** if simple roles suffice
+2. Add **Claims-Based** when you need attribute-based checks
+3. Use **Policy-Based** for complex business rules that don't depend on specific resources
+4. Use **Resource-Based** when authorization depends on the resource being accessed
+
+
 **1. Role-Based Authorization**
 ```csharp
 // Simple role check
