@@ -14,6 +14,7 @@ Quick reference notes for programming concepts and technologies
 - [Entity Framework](./entity-framework/README.md)
 
 ### Programming Concepts
+- [Programming Fundamentals](./programming-fundamentals/README.md)
 - [Microservices](./microservices/README.md) - Microservices architecture patterns and best practices
 
 ### Security
